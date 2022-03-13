@@ -3,7 +3,7 @@
 [![Python 2.6|2.7|3.8|3.9](https://img.shields.io/badge/python-2.6|2.7|3.6|3.7|3.8|3.9|3.10-green.svg?logo=python&logoColor=yellow)](https://www.python.org/)
 [![GitHub release](https://img.shields.io/github/v/tag/FlyfishSec/rcX.svg?label=release&color=green)](https://github.com/FlyfishSec/rcX/releases)
 [![License](https://img.shields.io/badge/license-GPLv2-red.svg?color=green)](https://raw.githubusercontent.com/sqlmapproject/sqlmap/master/LICENSE)
-# [<img width="80" src="https://cdn.rawgit.com/FlyfishSec/rcX/main/rcX-png/logo.png"/>](https://github.com/FlyfishSec/rcX/releases)
+# [<img width="80" src="rcX-png/logo.png"/>](https://github.com/FlyfishSec/rcX/releases)
 ## What is rcX?
 ### "rc" - stands for remote command or remote code.
 ### "X" - you can understand as assistant or tool.
@@ -80,9 +80,10 @@ Use rcX as a server then you can use it with your team or friends.
 
 ## Support rcX
 
-|                                            Bitcoin Address QR Code                                            |Ethereum Address QR Code|Monero Address QR Code|DOGECOIN Address QR Code|
-|:-------------------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------------------------------------:|
-|<img width="175" height="175" src="https://cdn.rawgit.com/FlyfishSec/rsGen/master/Screenshot/donate-btc.png"/> | <img width="175" height="175" src="https://cdn.rawgit.com/FlyfishSec/rsGen/master/Screenshot/donate-eth.png"/> | <img width="175" height="175" src="https://cdn.rawgit.com/FlyfishSec/rsGen/master/Screenshot/donate-xmr.png"/> | <img width="175" height="175" src="https://cdn.rawgit.com/FlyfishSec/rsGen/master/Screenshot/donate-doge.png"/> |
+|Bitcoin Address QR Code|Ethereum Address QR Code|Monero Address QR Code|DOGECOIN Address QR Code|
+|:--------------------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------------------------------------:|
+| <img width="175" height="175" src="https://cdn.rawgit.com/FlyfishSec/rsGen/master/Screenshot/donate-btc.png"/> | <img width="175" height="175" src="https://cdn.rawgit.com/FlyfishSec/rsGen/master/Screenshot/donate-eth.png"/> | <img width="175" height="175" src="https://cdn.rawgit.com/FlyfishSec/rsGen/master/Screenshot/donate-xmr.png"/> | <img width="175" height="175" src="https://cdn.rawgit.com/FlyfishSec/rsGen/master/Screenshot/donate-doge.png"/> |
+
 **BTC**: 3F2R6KMXbJ576yJNJpjrBnhVG64Ltg1WoF
 
 **ETH**: 0xab15323b0c7721B6B9fDf5A8089a6Ec697C9feED
