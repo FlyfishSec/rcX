@@ -11,7 +11,7 @@
   The predecessor of rcX is rsGen(A Reverse Shell Payload Generator). Currently, it is a powerful Reverse/Bind shell Generator.
   More features will be added in the future.
   
-![rcX](rcX-png/rcx-main.png "rcX")
+![rcX](https://cdn.rawgit.com/FlyfishSec/rcX/main/rcX-png/rcx-main.png "rcX")
 
 ## Follow me
 `pip install -r requirements.txt`
@@ -20,7 +20,7 @@ or Download the packaged binaries
 #### Example:
 ##### 1.Get a bash reverse shell and output in tabular format.
 `python rcX.py -l 127.0.0.1 -p 8888 -t bash --table`
-![rcX](rcX-png/rcx-table.png "rcX")
+![rcX](https://cdn.rawgit.com/FlyfishSec/rcX/main/rcX-png/rcx-table.png "rcX")
 ##### 2.Custom shell path.
 `python rcX.py -l 127.0.0.1 -p 8888 -t bash -s "/bin/sh"`
 ##### 3.Copy the specified id payload to the clipboard.
@@ -29,10 +29,10 @@ or Download the packaged binaries
 `python rcX.py -l 127.0.0.1 -p 8888 -t bash -e base64`
 ##### 5.Get a xor encoded and obfuscated bash reverse shell.
 `python rcX.py -l 127.0.0.1 -p 8888 -t bash -e xor --obf reverse --clip 7`
-![rcX](rcX-png/rcx-obf.png "rcX")
+![rcX](https://cdn.rawgit.com/FlyfishSec/rcX/main/rcX-png/rcx-obf.png "rcX")
 ##### 6.Get a staging bash reverse shell.
 `python rcX.py -l 127.0.0.1 -p 8888 -t bash --staging-url 0 --staging-cmd 0`
-![rcX](rcX-png/rcx-staged.png "rcX")
+![rcX](https://cdn.rawgit.com/FlyfishSec/rcX/main/rcX-png/rcx-staged.png "rcX")
 ##### 7.Get a staging bash reverse shell and forward local port using ngrok tunnel.
 `python rcX.py -l 127.0.0.1 -p 8888 -t bash --tunnel ngrok_jp`
 ##### 8.Get a Windows Powershell reverse shell.
@@ -45,14 +45,14 @@ Use rcX as a server then you can use it with your team or friends.
 > Tip: When rcX is running as a server, if the request origin is not 127.0.0.1 or localhost, the ngrok tunnel feature will be disabled and the related options will be hidden on the Front-end
 #### Example:
 `python rcX.py -w`
-![rcX](rcX-png/rcx-web.gif "rcX")
+![rcX](https://cdn.rawgit.com/FlyfishSec/rcX/main/rcX-png/rcx-web.gif "rcX")
 
 ### Web CLI
 > When rcX is running as a server, you can use curl in terminal to get the payload.
 #### Example:
 ##### 1.Get a bash reverse shell payload
   `curl http://127.0.0.1/linux/bash/127.0.0.4/8888`
-![rcX](rcX-png/rcx-web-cli.png "rcX")
+![rcX](https://cdn.rawgit.com/FlyfishSec/rcX/main/rcX-png/rcx-web-cli.png "rcX")
 ##### 2.Base64 encoded
   `curl http://127.0.0.1/linux/bash/127.0.0.4/8888/base64`
 
@@ -82,7 +82,7 @@ Use rcX as a server then you can use it with your team or friends.
 
 |                                            Bitcoin Address QR Code                                             |                                                 Ethereum Address QR Code                                                  |                                                  Monero Address QR Code                                                   |                                                  DOGECOIN Address QR Code                                                  |
 |:--------------------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------------------------------------:|
-| <img width="175" height="175" src="https://cdn.rawgit.com/FlyfishSec/rsGen/master/Screenshot/donate-btc.png"/> | <img width="175" height="175" src="https://raw.githubusercontent.com/FlyfishSec/rsGen/master/Screenshot/donate-eth.png"/> | <img width="175" height="175" src="https://raw.githubusercontent.com/FlyfishSec/rsGen/master/Screenshot/donate-xmr.png"/> | <img width="175" height="175" src="https://raw.githubusercontent.com/FlyfishSec/rsGen/master/Screenshot/donate-doge.png"/> |
+| <img width="175" height="175" src="https://cdn.rawgit.com/FlyfishSec/rsGen/master/Screenshot/donate-btc.png"/> | <img width="175" height="175" src="https://cdn.rawgit.com/FlyfishSec/rsGen/master/Screenshot/donate-eth.png"/> | <img width="175" height="175" src="https://cdn.rawgit.com/FlyfishSec/rsGen/master/Screenshot/donate-xmr.png"/> | <img width="175" height="175" src="https://cdn.rawgit.com/FlyfishSec/rsGen/master/Screenshot/donate-doge.png"/> |
 
 **BTC**: 3F2R6KMXbJ576yJNJpjrBnhVG64Ltg1WoF
 
