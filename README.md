@@ -80,7 +80,7 @@ Use rcX as a server then you can use it with your team or friends.
 
 ## Support rcX
 
-|                                            Bitcoin Address QR Code                                             |                                                 Ethereum Address QR Code                                                  |                                                  Monero Address QR Code                                                   |                                                  DOGECOIN Address QR Code                                                  |
+|Bitcoin Address QR Code|Ethereum Address QR Code|Monero Address QR Code|DOGECOIN Address QR Code|
 |:--------------------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------------------------------------:|
 | <img width="175" height="175" src="https://cdn.rawgit.com/FlyfishSec/rsGen/master/Screenshot/donate-btc.png"/> | <img width="175" height="175" src="https://cdn.rawgit.com/FlyfishSec/rsGen/master/Screenshot/donate-eth.png"/> | <img width="175" height="175" src="https://cdn.rawgit.com/FlyfishSec/rsGen/master/Screenshot/donate-xmr.png"/> | <img width="175" height="175" src="https://cdn.rawgit.com/FlyfishSec/rsGen/master/Screenshot/donate-doge.png"/> |
 
