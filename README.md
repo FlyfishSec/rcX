@@ -1,6 +1,6 @@
 
 # rcX
-[![Build](https://github.com/FlyfishSec/rsgen/actions/workflows/build.yml/badge.svg?branch=develop&event=push)](https://github.com/FlyfishSec/rsgen/actions/workflows/build.yml)
+[![Build](https://github.com/FlyfishSec/rcX/actions/workflows/build.yml/badge.svg)](https://github.com/FlyfishSec/rcX/actions/workflows/build.yml)
 [![Python 2.6|2.7|3.8|3.9](https://img.shields.io/badge/python-2.6|2.7|3.6|3.7|3.8|3.9|3.10-green.svg?logo=python)](https://www.python.org/)
 [![GitHub release](https://img.shields.io/github/tag/fatedier/frp.svg?label=release)](https://github.com/fatedier/frp/releases)
 [![License](https://img.shields.io/badge/license-GPLv2-red.svg)](https://raw.githubusercontent.com/sqlmapproject/sqlmap/master/LICENSE)
@@ -11,7 +11,7 @@
   The predecessor of rcX is rsGen(A Reverse Shell Payload Generator). Currently, it is a powerful Reverse/Bind shell Generator.
   More features will be added in the future.
   
-![rsGen](https://cdn.rawgit.com/FlyfishSec/rsGen/master/Screenshot/rsgen.png "rsGen")
+![rcX](https://cdn.rawgit.com/FlyfishSec/rcX/main/rcX-png/rcX-main.png "rcX")
 
 ## Follow me
 ### CLI Usage
