@@ -2,10 +2,8 @@
 __Author__ = 'FlyfishSec'
 __Version__ = 'v0.0.1'
 __SITE__ = 'https://github.com/FlyfishSec/rcX'
-__Description__ = '''
-This tool has been ported to python
-Considering cross-platform use, I reimplemented rsGen in python with multiple improvements
-'''
+__Description__ = ''''''
+
 __Release_Notes__ = '''
 ✨ New Features
  + 
