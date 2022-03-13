@@ -48,11 +48,9 @@ Use rcX as a server then you can use it with your team or friends.
 ### Web CLI
 > When rcX is running as a server, you can use curl in terminal to get the payload.
 #### Example:
-![rcX](rcX-png/rcx-web-cli.png "rcX")
-
 ##### 1.Get a bash reverse shell payload
   `curl http://127.0.0.1/linux/bash/127.0.0.4/8888`
-
+![rcX](rcX-png/rcx-web-cli.png "rcX")
 ##### 2.Base64 encoded
   `curl http://127.0.0.1/linux/bash/127.0.0.4/8888/base64`
 
