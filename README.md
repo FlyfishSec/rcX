@@ -11,7 +11,7 @@
   The predecessor of rcX is rsGen(A Reverse Shell Payload Generator). Currently, it is a powerful Reverse/Bind shell Generator.
   More features will be added in the future.
   
-![rcX](/rcX-png/rcX-main.png "rcX")
+![rcX](rcX-png/rcX-main.png "rcX")
 
 ## Follow me
 ### CLI Usage
@@ -40,12 +40,12 @@ Use rcX as a server then you can use it with your team or friends.
 > Tip: When rcX is running as a server, if the request origin is not 127.0.0.1 or localhost, the ngrok tunnel feature will be disabled and the related options will be hidden on the Front-end
 #### Examle:
 `python rcX.py -w`
-![rsGen](https://cdn.rawgit.com/FlyfishSec/rsGen/master/Screenshot/rsgen.png "rsGen")
+![rcX](rcX-png/rcx-web.gif) "rcX")
 
 ### Web CLI
 > When rcX is running as a server, you can use curl in terminal to get the payload.
 #### Example:
-![rsGen](https://cdn.rawgit.com/FlyfishSec/rsGen/master/Screenshot/rsgen.png "rsGen")
+![rcX](rcX-png/rcx-web-cli.png "rcX")
 
 ##### 1.Get a bash reverse shell payload
   `curl http://127.0.0.1/linux/bash/127.0.0.4/8888`
