@@ -11,7 +11,7 @@
   The predecessor of rcX is rsGen(A Reverse Shell Payload Generator). Currently, it is a powerful Reverse/Bind shell Generator.
   More features will be added in the future.
   
-![rcX](rcX-png/rcX-main.png "rcX")
+![rcX](rcX-png/rcx-main.png "rcX")
 
 ## Follow me
 ### CLI Usage
