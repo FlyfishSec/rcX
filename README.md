@@ -14,6 +14,8 @@
 ![rcX](rcX-png/rcx-main.png "rcX")
 
 ## Follow me
+`pip install -r requirements.txt`
+or Download the packaged binaries
 ### CLI Usage
 #### Example:
 ##### 1.Get a bash reverse shell and output in tabular format.
