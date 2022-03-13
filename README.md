@@ -2,7 +2,7 @@
 # rcX
 [![Build](https://github.com/FlyfishSec/rcX/actions/workflows/build.yml/badge.svg)](https://github.com/FlyfishSec/rcX/actions/workflows/build.yml)
 [![Python 2.6|2.7|3.8|3.9](https://img.shields.io/badge/python-2.6|2.7|3.6|3.7|3.8|3.9|3.10-green.svg?logo=python&logoColor=yellow)](https://www.python.org/)
-[![GitHub release](https://img.shields.io/github/v/tag/FlyfishSec/rcX.svg?label=release&sort=semver&color=%22blue%22](https://github.com/FlyfishSec/rcX/releases)
+[![GitHub release](https://img.shields.io/github/v/tag/FlyfishSec/rcX.svg?label=release&sort=semver&color=%22blue%22)](https://github.com/FlyfishSec/rcX/releases)
 [![License](https://img.shields.io/badge/license-GPLv2-red.svg)](https://raw.githubusercontent.com/sqlmapproject/sqlmap/master/LICENSE)
 ## What is rcX?
 ### "rc" - stands for remote command or remote code.
