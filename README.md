@@ -84,12 +84,12 @@ Use rcX as a server then you can use it with your team or friends.
 |:--------------------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------------------------------------:|
 | <img width="175" height="175" src="https://cdn.rawgit.com/FlyfishSec/rsGen/master/Screenshot/donate-btc.png"/> | <img width="175" height="175" src="https://cdn.rawgit.com/FlyfishSec/rsGen/master/Screenshot/donate-eth.png"/> | <img width="175" height="175" src="https://cdn.rawgit.com/FlyfishSec/rsGen/master/Screenshot/donate-xmr.png"/> | <img width="175" height="175" src="https://cdn.rawgit.com/FlyfishSec/rsGen/master/Screenshot/donate-doge.png"/> |
 
-**BTC**: 3F2R6KMXbJ576yJNJpjrBnhVG64Ltg1WoF
+*BTC*: 3F2R6KMXbJ576yJNJpjrBnhVG64Ltg1WoF
 
-**ETH**: 0xab15323b0c7721B6B9fDf5A8089a6Ec697C9feED
+*ETH*: 0xab15323b0c7721B6B9fDf5A8089a6Ec697C9feED
 
-**XMR**: 48rBRHh2iV27oHzXMGnjbwCLLyinpqFry6gLTAaQiFVtMRw4kqabeoFiBYqNAPCBHbKjgQezPNLwDihMSNbEPCuYP1xzCWi
+*XMR*: 48rBRHh2iV27oHzXMGnjbwCLLyinpqFry6gLTAaQiFVtMRw4kqabeoFiBYqNAPCBHbKjgQezPNLwDihMSNbEPCuYP1xzCWi
 
-**Dogecoin**: DBQATuB7t4wk56dwFqcGdqQtY8BSjL77if
+*Dogecoin*: DBQATuB7t4wk56dwFqcGdqQtY8BSjL77if
 
 
