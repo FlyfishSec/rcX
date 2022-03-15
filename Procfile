@@ -1,1 +1,1 @@
-web: python rcX.py -w --web-port 50000
+web: python rcX.py -w --web-port 5000
