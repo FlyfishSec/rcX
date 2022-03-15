@@ -1,1 +1,1 @@
-web: python rcX.py -w --web-host 8000
+web: python rcX.py -w --web-host 50000
