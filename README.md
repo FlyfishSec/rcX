@@ -8,7 +8,7 @@
 ![rcX](https://cdn.rawgit.com/FlyfishSec/rcX/main/rcX-png/rcx-online.gif "rcX")
 
 ## curl
-https://cdn.rawgit.com/FlyfishSec/rcX/main/rcX-png/rcx-online-curl.gif
+[rcX](https://cdn.rawgit.com/FlyfishSec/rcX/main/rcX-png/rcx-online-curl.gif)
 
 ## What is rcX?
 ### "rc" - stands for remote command or remote code.
