@@ -6,8 +6,8 @@
 # [<img width="80" src="https://cdn.rawgit.com/FlyfishSec/rcX/main/rcX-png/logo.png"/>](https://github.com/FlyfishSec/rcX/releases)
 ## rcX online(<a href="https://rcxonline.cf" target="_blank">rcxonline.cf</a>)
 ![rcX](https://cdn.rawgit.com/FlyfishSec/rcX/main/rcX-png/rcx-online.gif "rcX")
-## curl
-![rcX](https://cdn.rawgit.com/FlyfishSec/rcX/main/rcX-png/rcx-online-curl.gif "rcX")
+## `curl https://rcxonline.cf`
+[rcX](https://cdn.rawgit.com/FlyfishSec/rcX/main/rcX-png/rcx-online-curl.gif "rcX")
 
 ## What is rcX?
 ### "rc" - stands for remote command or remote code.
