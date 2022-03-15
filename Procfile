@@ -1,1 +1,1 @@
-web: python rcX.py -w --web-port 5000
+web: gunicorn --bind 0.0.0.0:$PORT flaskapp:rcX.py -w
