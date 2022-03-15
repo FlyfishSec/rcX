@@ -4,8 +4,9 @@
 [![GitHub release](https://img.shields.io/github/v/tag/FlyfishSec/rcX.svg?label=release&color=green)](https://github.com/FlyfishSec/rcX/releases)
 [![License](https://img.shields.io/badge/license-GPLv2-red.svg?color=green)](https://cdn.rawgit.com/FlyfishSec/rcX/main/LICENSE)
 # [<img width="80" src="https://cdn.rawgit.com/FlyfishSec/rcX/main/rcX-png/logo.png"/>](https://github.com/FlyfishSec/rcX/releases)
-## rcX online([rcxonline.cf](https://rcxonline.cf))
+## rcX online(<a href="https://rcxonline.cf" target="_blank">rcxonline.cf</a>)
 ![rcX](https://cdn.rawgit.com/FlyfishSec/rcX/main/rcX-png/rcx-online.gif "rcX")
+![rcX](https://cdn.rawgit.com/FlyfishSec/rcX/main/rcX-png/rcx-online-curl.gif "rcX")
 
 ## What is rcX?
 ### "rc" - stands for remote command or remote code.
@@ -16,9 +17,9 @@
   
 ![rcX](https://cdn.rawgit.com/FlyfishSec/rcX/main/rcX-png/rcx-main.png "rcX")
 
-## Follow me
+## Local use
 `pip install -r requirements.txt`
-or Download the packaged binaries
+or Download the packaged <a href="https://github.com/FlyfishSec/rcX/releases" target="_blank">binaries</a>
 ### CLI Usage
 #### Example:
 ##### 1.Get a bash reverse shell and output in tabular format.
