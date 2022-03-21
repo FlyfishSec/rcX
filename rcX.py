@@ -1,6 +1,6 @@
 # coding=utf8
 __Author__ = 'FlyfishSec'
-__Version__ = 'v0.0.1'
+__Version__ = 'v0.0.2'
 __SITE__ = 'https://github.com/FlyfishSec/rcX'
 __Description__ = ''''''
 
@@ -11,7 +11,7 @@ __Release_Notes__ = '''
  + 
 
 🐛 Bug fixes
- + 
+ + Fix web mode ip obfuscator not working
 
 '''
 
@@ -1922,6 +1922,7 @@ def create_app(host="127.0.0.1", port=80, debug=False):
         elif request.form.getlist('encoder[]'):
             encoder = request.form.getlist("encoder[]")
         obfuscator = request.form.get("obfuscator")
+        ip_obfuscator = request.form.get("ip_obfuscator")
         staging_url = request.form.get("staging_url")
         if staging_url == "100":
             staging_url = ""
@@ -1948,7 +1949,7 @@ def create_app(host="127.0.0.1", port=80, debug=False):
                             encoder=encoder, web=True,
                             platform=platform, binary_name=binary_name,
                             shell_path=shell_path,
-                            obfuscator=obfuscator,
+                            obfuscator=obfuscator, ip_obfuscator=ip_obfuscator,
                             staging_url=staging_url, staging_cmd=staging_cmd, localtunnel=localtunnel)
         title = None
         result = "<div class='alert alert-info' role='alert'>Oops, nothing found!</div>"
