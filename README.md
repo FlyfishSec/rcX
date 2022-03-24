@@ -52,7 +52,6 @@ Use rcX as a server then you can use it with your team or friends.
 > Tip: When rcX is running as a server, if the request origin is not 127.0.0.1 or localhost, the ngrok tunnel feature will be disabled and the related options will be hidden on the Front-end
 #### Example:
 `python rcX.py -w`
-![rcX](https://cdn.rawgit.com/FlyfishSec/rcX/main/rcX-png/rcx-web.gif "rcX")
 
 ### Web CLI
 > When rcX is running as a server, you can use curl in terminal to get the payload.
