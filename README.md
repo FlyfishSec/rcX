@@ -5,7 +5,8 @@
 [![GitHub downloads](https://img.shields.io/github/downloads/flyfishSec/rcX/total?color=cyan)](https://github.com/FlyfishSec/rcX/releases)
 [![License](https://img.shields.io/badge/license-GPLv2-red.svg?color=green)](https://cdn.rawgit.com/FlyfishSec/rcX/main/LICENSE)
 # [<img width="80" src="https://cdn.rawgit.com/FlyfishSec/rcX/main/rcX-png/logo.png"/>](https://github.com/FlyfishSec/rcX/releases)
-## <a href="https://rcxonline.cf" target="_blank">rcxonline.cf</a>
+## [rcxonline.cf](https://rcxonline.cf)/[rcxonline.ml](https://rcxonline.ml)
+
 ![rcX](https://cdn.rawgit.com/FlyfishSec/rcX/main/rcX-png/rcxonline.gif "rcX")
 
 ## curl
