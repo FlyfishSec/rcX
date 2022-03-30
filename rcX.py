@@ -67,11 +67,12 @@ def Generator(host="127.0.0.1", port="44444", port2="", shell_type="bash", shell
                                  name="ngrok-tcp")
             t.daemon = True
             t.start()
-            public_url = t.join(timeout=3)
+            public_url = t.join(timeout=5)
         else:
             uri = "http://127.0.0.1:4040/api/tunnels"
             try:
                 for _ in range(3):
+                    __import__('time').sleep(1)
                     public_url = __import__('requests').get(uri, timeout=3).json()["tunnels"][0]["public_url"]
                     # public_url = ngrok.api_request(uri, method="GET")["tunnels"]["public_url"]
                     if public_url:
@@ -605,7 +606,6 @@ def tunnel(protocol=None, port=None, _dir=None, loc=None):
                   "1T750atJi3xccndeUqJ4ewiS62o_2s6f8GUccL1qDUXTGSftN",
                   "1QUysRUo97w5mdB6sCZvTTMM0aK_3unoMs6nYd7grgCkuhbj3",
                   "5eMywZLisJNdybqpFLVgs_4XQDeF3YCMHu1Ybf7mVE6",
-                  "4Cg1cEwCT7Ek89zT4VcdB_4GPAjMFgu6nhwY7SxQm94",
                   "1SGs4s9NrhxP9FRURszjL1nITSv_otcpfpb6aMVEL13u3dv1",
                   "1SuK2ukM9Z4NohoJbU9224uMzXr_6h1ABdCrJU2EviZv4RN4r",
                   "7ecmt2Kux5uYsTUHrrqGU_3W9CJnaSeSyxiwkjxNhHc",
@@ -2156,10 +2156,13 @@ def main():
         if args.tunnel:
             try:
                 from pyngrok import ngrok
+                __import__('time').sleep(1)
                 tun = ngrok.get_tunnels()
                 print(tun[0], "(Press CTRL+C to quit)")
                 ngp = ngrok.get_ngrok_process()
                 ngp.proc.wait()
+            except IndexError:
+                print("ngrok tunnel start failed!")
             except KeyboardInterrupt:
                 __import__('sys').exit()
 
