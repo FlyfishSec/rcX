@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700,800" rel="stylesheet" type="text/css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js" integrity="sha384-7+zCNj/IqJ95wo16oMtfsKbZ9ccEh31eOz1HGyDuCQ6wgnyJNSYdrPa03rtR1zdB" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js" integrity="sha384-QJHtvGhmr9XOIpI6YVutG+2QOK9T+ZnN4kzFN1RtK3zEFEIsxhlmWl5/YESvpZ13" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@2.1.3/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chosen-js@1.8.7/chosen.jquery.min.js" integrity="sha512-rMGGF4wg1R73ehtnxXBt5mbUfN9JUJwbk21KMlnLZDJh7BkPmeovBuddZCENJddHYYMkCh9hPFnPmS9sspki8g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chosen-js@1.8.7/chosen.min.css" integrity="sha512-yVvxUQV0QESBt1SyZbNJMAwyKvFTLMyXSyBHDO4BG5t7k/Lw34tyqlSDlKIrIENIzCl+RVUNjmCPG+V/GMesRw==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <meta charset="UTF-8">
+    <style>
+        .chosen-container-multi .chosen-choices li.search-field input[type=text] {
+            height: 34px
+        }
+        
+        .chosen-container-multi .chosen-choices li.search-choice {
+            border: 1px solid #ced4da;
+            line-height: 20px
+        }
+        
+        .input-group>:not(:first-child):not(.dropdown-menu):not(.valid-tooltip):not(.valid-feedback):not(.invalid-tooltip):not(.invalid-feedback) {
+            min-width: 100px
+        }
+        
+        .nav-tabs>li>.nav-link {
+            color: gray;
+            padding: 5px;
+            border-radius: 3px
+        }
+        
+        button.close {
+            padding: 0;
+            cursor: pointer;
+            background: 0 0;
+            border: 0;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none
+        }
+        
+        .close {
+            float: right;
+            font-size: 21px;
+            font-weight: 700;
+            line-height: 1;
+            color: #000;
+            text-shadow: 0 1px 0 #fff;
+            filter: alpha(opacity=20);
+            opacity: .2
+        }
+        
+        .accordion-button::after {
+            background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='%23333' xmlns='http://www.w3.org/2000/svg'%3e%3cpath fill-rule='evenodd' d='M8 0a1 1 0 0 1 1 1v6h6a1 1 0 1 1 0 2H9v6a1 1 0 1 1-2 0V9H1a1 1 0 0 1 0-2h6V1a1 1 0 0 1 1-1z' clip-rule='evenodd'/%3e%3c/svg%3e");
+            transform: scale(.7)!important
+        }
+        
+        .accordion-button:not(.collapsed)::after {
+            background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='%23333' xmlns='http://www.w3.org/2000/svg'%3e%3cpath fill-rule='evenodd' d='M0 8a1 1 0 0 1 1-1h14a1 1 0 1 1 0 2H1a1 1 0 0 1-1-1z' clip-rule='evenodd'/%3e%3c/svg%3e")
+        }
+    </style>
+</head>
+
+<body>
+    <h1 class="text-center text-muted">rcX - Shell Generator</h1>
+    <div class="container">
+        <form id="form" class="form">
+            <div class="input-group mb-3">
+                <div class="input-group-prepend"><span class="input-group-text" id="inputGroup-sizing-default">Host</span></div>
+                <input placeholder="127.0.0.1" name="host" class="form-control" onkeypress="return event.charCode>=65&&event.charCode<=90||event.charCode>=97&&event.charCode<=122||event.charCode>=48&&event.charCode<=57||45==event.charCode||46==event.charCode||32==event.charCode" maxlength="255" oninput="this.value.length>this.maxLength&&(this.value=this.value.slice(0,this.maxLength))">
+                <div class="input-group-prepend"><span class="input-group-text" id="inputGroup-sizing-default">Port</span></div>
+                <input type="number" placeholder="44444" name="port" class="form-control" maxlength="5" oninput="this.value.length>this.maxLength&&(this.value=this.value.slice(0,this.maxLength))">
+                <div class="input-group-prepend"><span class="input-group-text" id="inputGroup-sizing-default">Shell Type</span></div>
+                <select id="shell_type" name="shell_type" class="form-control">
+                    <option value="bash" selected>Bash</option>
+                    <option value="netcat">Netcat</option>
+                    <option value="telnet">Telnet</option>
+                    <option value="openssl">OpenSSL</option>
+                    <option value="python">Python</option>
+                    <option value="powershell">PowerShell</option>
+                    <option value="csharp">C#</option>
+                    <option value="php">PHP</option>
+                    <option value="ruby">Ruby</option>
+                    <option value="socat">Socat</option>
+                    <option value="golang">Golang</option>
+                    <option value="perl">Perl</option>
+                    <option value="java">Java</option>
+                    <option value="nodejs">NodeJS</option>
+                    <option value="lua">Lua</option>
+                </select>
+                <div class="input-group-prepend"><span class="input-group-text" id="inputGroup-sizing-default">Platform</span></div>
+                <select id="platform" name="platform" class="form-select">
+                    <option value="linux" selected>Linux</option>
+                    <option value="windows">Windows</option>
+                </select>
+                <div class="input-group-prepend"><span class="input-group-text" id="inputGroup-sizing-default">Password</span></div>
+                <input name="password" class="form-control" onkeypress="return!(42==event.charCode||60==event.charCode||62==event.charCode||63==event.charCode||124==event.charCode)">
+                <button style="height:38px;max-width:40px;min-width:40px;padding-left:10px;border:1px solid #ced4da" class="accordion-button collapsed col" type="button" data-bs-toggle="collapse" data-bs-target="#more" aria-expanded="false" aria-controls="more"></button>
+            </div>
+            <div class="collapse" id="more">
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend"><span class="input-group-text" id="inputGroup-sizing-default">Direction</span></div>
+                    <select id="platform" name="direction" class="form-select">
+                        <option value="reverse" selected>Reverse</option>
+                        <option value="bind">Bind</option>
+                    </select>
+                    <div class="input-group-prepend"><span class="input-group-text" id="inputGroup-sizing-default">Protocol</span></div>
+                    <select name="protocol" class="form-select">
+                        <option value="tcp" selected>TCP</option>
+                        <option value="udp">UDP</option>
+                        <option value="https">HTTPS</option>
+                        <option value="http">HTTP</option>
+                        <option value="dns">DNS</option>
+                        <option value="icmp">ICMP</option>
+                    </select>
+                    <div class="input-group-prepend"><span class="input-group-text" id="inputGroup-sizing-default">Shell Path</span></div>
+                    <input placeholder="/bin/sh" name="shell_path" class="form-control" onkeypress="return!(42==event.charCode||60==event.charCode||62==event.charCode||63==event.charCode||124==event.charCode)">
+                    <div class="input-group-prepend"><span class="input-group-text" id="inputGroup-sizing-default">BinaryName</span></div>
+                    <input placeholder="python3.exe" name="binary_name" class="form-control" onkeypress="return!(42==event.charCode||60==event.charCode||62==event.charCode||63==event.charCode||124==event.charCode)">
+                </div>
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend"><span class="input-group-text" id="inputGroup-sizing-default">Interactive Mode</span></div>
+                    <select name="interactive_mode" class="form-select">
+                        <option value="interactive" selected>Interactive</option>
+                        <option value="semi_interactive">Semi-Interactive</option>
+                        <option value="non_interactive">Non-Interactive</option>
+                    </select>
+                    <div class="input-group-prepend"><span class="input-group-text" id="inputGroup-sizing-default">Encryption</span></div>
+                    <select name="encryption" class="form-select">
+                        <option selected></option>
+                        <option value="ssl">SSL</option>
+                        <option value="aes">AES</option>
+                    </select>
+                    <div class="input-group-prepend"><span class="input-group-text" id="inputGroup-sizing-default">StagingUrl</span></div>
+                    <select id="staging_url" name="staging_url" class="form-select">
+                        <option selected></option>
+                        <option value="0">https://tcp.st</option>
+                        <option value="1">https://oshi.at</option>
+                        <option value="2">https://temp.sh</option>
+                        <option value="3">https://ip.fi</option>
+                        <option value="4">https://sicp.me</option>
+                        <option value="5">https://transfer.sh</option>
+                        <option value="6">https://dpaste.com</option>
+                        <option value="7">https://termbin.com</option>
+                        <option value="8">https://teknik.io</option>
+                        <option value="9">https://toptal.com</option>
+                        <option value="10">https://centos.org</option>
+                    </select>
+                    <div class="input-group-prepend"><span class="input-group-text" id="inputGroup-sizing-default">StagingCmd</span></div>
+                    <select id="staging_cmd" name="staging_cmd" class="form-select">
+                        <option value="0" selected>curl</option>
+                        <option value="1">wget</option>
+                        <option value="2">jrunscript</option>
+                        <option value="3">bitsadmin</option>
+                        <option value="4">certutil</option>
+                        <option value="5">powershell-Invoke-WebRequest</option>
+                        <option value="6">powershell-curl</option>
+                        <option value="7">powershell-wget</option>
+                        <option value="8">powershell-bitstransfer</option>
+                        <option value="9">powershell-DownloadString</option>
+                        <option value="10">powershell-DownloadFile</option>
+                        <option value="11">certoc.exe</option>
+                        <option value="12">GfxDownloadWrapper.exe</option>
+                        <option value="13">hh.exe</option>
+                        <option value="14">lwp-download</option>
+                    </select>
+                </div>
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend"><span class="input-group-text" id="inputGroup-sizing-default">Encoder</span></div>
+                    <select data-placeholder="base64, hex, xor, gzip..." multiple name="encoder[]" class="chosen-select">
+                        <option value="base64">base64_cmd</option>
+                        <option value="base64-c">base64_code</option>
+                        <option value="hex">hex_cmd</option>
+                        <option value="hex-c">hex_code</option>
+                        <option value="xor">xor_cmd</option>
+                        <option value="xor-c">xor_code</option>
+                        <option value="rot13-c">rot13_code</option>
+                        <option value="gzip">gzip</option>
+                        <option value="bzip2">bzip2</option>
+                    </select>
+                </div>
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend"><span class="input-group-text" id="inputGroup-sizing-default">Obfuscator</span></div>
+                    <select name="obfuscator" class="form-select">
+                        <option selected></option>
+                        <option value="replace_char">ReplaceChar</option>
+                        <option value="reverse">ReverseCMD</option>
+                    </select>
+                    <div class="input-group-prepend"><span class="input-group-text" id="inputGroup-sizing-default">IPObfuscator</span></div>
+                    <select name="ip_obfuscator" class="form-select">
+                        <option selected></option>
+                        <option value="ip2int">ip2int</option>
+                        <option value="ip2oct">ip2oct</option>
+                        <option value="ip2hex">ip2hex</option>
+                    </select>
+                    <div class="input-group-prepend localtunnel"><span class="input-group-text" id="inputGroup-sizing-default">localtunnel</span></div>
+                    <select id="localtunnel" name="localtunnel" class="form-select">
+                        <option selected></option>
+                        <option value="ngrok_us">Ngrok-us</option>
+                        <option value="ngrok_eu">Ngrok-eu</option>
+                        <option value="ngrok_ap">Ngrok-ap</option>
+                        <option value="ngrok_au">Ngrok-au</option>
+                        <option value="ngrok_sa">Ngrok-sa</option>
+                        <option value="ngrok_jp">Ngrok-jp</option>
+                        <option value="ngrok_in">Ngrok-in</option>
+                        <option value="ng_close">Shutdown Ngrok</option>
+                    </select>
+                </div>
+            </div>
+        </form>
+        <div class="input-group mb-3">
+            <div class="input-group-prepend"><span class="input-group-text" id="inputGroup-sizing-default">Test Terminal</span></div>
+            <select id="terminal_id" name="terminal" class="form-select">
+                <option selected></option>
+                <option value="1">terminal-1</option>
+                <option value="2">terminal-2</option>
+                <option value="3">terminal-3</option>
+                <option value="4">...</option>
+                <option value="5">...</option>
+                <option value="6">...</option>
+            </select>
+        </div>
+        <div id="content">
+            <ul class="nav nav-tabs" id="tabs" role="tablist">
+                <li class="nav-item"><a class="nav-link active" id="tab-list" data-bs-toggle="tab" href="#output" role="tab" aria-controls="output" aria-selected="true">Output</a></li>
+            </ul>
+            <div class="tab-content">
+                <div id="output" class="tab-pane fade show active" role="tabpanel" aria-labelledby="output-tab">
+                    <div id="output-title" class="text-info bg-dark"></div>
+                    <div id="output-data"></div>
+                </div>
+            </div>
+        </div>
+        <script>
+            document.getElementById("shell_type").addEventListener("change", function() {
+                "powershell" == this.value ? document.getElementById("platform").value = "windows" : "bash" == this.value && (document.getElementById("platform").value = "linux")
+            });
+            const h = ["127.0.0.1", "localhost"];
+            h.includes(window.location.host) || (document.querySelector(".localtunnel").style = "display:none", document.getElementById("localtunnel").style.visibility = "hidden"), $(".chosen-select").chosen({
+                no_results_text: "Oops, nothing found!",
+                width: "700px"
+            });
+            async function gen(t) {
+                const e = await fetch(t, {
+                    method: "POST",
+                    body: new FormData(form)
+                });
+                t = await e.text();
+                t && (t = JSON.parse(t), $("#output-title").html(t.t), $("#output-data").html(t.r))
+            }
+            document.getElementById("terminal_id").addEventListener("change", function() {
+                var t, e, n;
+                this.value && (t = "terminal-" + this.value, e = "terminal_" + this.value, $("#tabs").append($('<li class="nav-item"><a class="nav-link" href="#' + e + '" role="tab" data-bs-toggle="tab">' + t + '<button class="close" type="button" title="Close this page">×</button></a></li>')), 1 == this.value ? n = "https://console.python.org/python-dot-org-console/" : 2 == this.value ? n = "https://www.programiz.com/python-programming/online-compiler/" : 3 == this.value && (n = "https://httpie.io/cli/run"), $('<div class="tab-pane fade" id="' + e + '"><div class="row"><div class="col"><a class="btn btn-light btn-sm float-left" data-bs-toggle="collapse" href="#tips" role="button" aria-expanded="false" aria-controls="tips">Help</a><div class="collapse" id="tips"><div class="card card-body">Python into the bash: <pre>__import__("pty").spawn("/bin/sh")<br>__import__("os").system("bash -i")</pre></div></div></div><div class="col"><input class="btn btn-light btn-sm float-end" type="button" id="reload" value="Reload" /></div></div><iframe id="' + e + '" style="border: none; width: 100%;min-height: 500px;" name="terminal1btn" class="embed-responsive-item" allowfullscreen src="' + n + '"></iframe></div>').appendTo(".tab-content"), $("#tabs a[href=#" + e + "]").tab("show"), $("#reload").click(function() {
+                    document.querySelector(".embed-responsive-item").src += ""
+                }))
+            }), $("form").on("keyup change", function(t) {
+                t.preventDefault();
+                t = document.querySelector("#tab-list");
+                new bootstrap.Tab(t).show(), gen("/gen")
+            }), $(document).ready(function() {
+                $("#tabs").on("click", ".close", function() {
+                    var t = $(this).parents("a").attr("href");
+                    $(this).parents("li").remove(), $(t).remove(), $("#tabs a:first").tab("show")
+                });
+                document.getElementById("tabs")
+            });
+        </script>
+    </div>
+</body>
+
+</html>
