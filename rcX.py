@@ -9,7 +9,6 @@ __Release_Notes__ = '''
  + Support loading payloads from YAML file 'payloads.yml'
 
 🎨 Improvements
- + Optimize import
  + Code optimization
 
 🐛 Bug fixes
