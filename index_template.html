@@ -2,8 +2,6 @@
 <html lang="en">
 
 <head>
-    https://cdn.rawgit.com/FlyfishSec/rcX/main/rcX-png/favicon.ico
-    <link rel="icon" type="image/x-icon" href="https://cdn.jsdelivr.net/gh/FlyfishSec/rcX@main/rcX-png/favicon.ico">
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700,800" rel="stylesheet" type="text/css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js" integrity="sha384-7+zCNj/IqJ95wo16oMtfsKbZ9ccEh31eOz1HGyDuCQ6wgnyJNSYdrPa03rtR1zdB" crossorigin="anonymous"></script>
@@ -237,7 +235,8 @@
             document.getElementById("shell_type").addEventListener("change", function() {
                 "powershell" == this.value ? document.getElementById("platform").value = "windows" : "bash" == this.value && (document.getElementById("platform").value = "linux")
             });
-            $(".chosen-select").chosen({
+            const h = ["127.0.0.1", "localhost"];
+            h.includes(window.location.host) || (document.querySelector(".localtunnel").style = "display:none", document.getElementById("localtunnel").style.visibility = "hidden"), $(".chosen-select").chosen({
                 no_results_text: "Oops, nothing found!",
                 width: "700px"
             });
@@ -248,7 +247,7 @@
                 });
                 t = await e.text();
                 t && (t = JSON.parse(t), $("#output-title").html(t.t), $("#output-data").html(t.r))
-            };
+            }
             document.getElementById("terminal_id").addEventListener("change", function() {
                 var t, e, n;
                 this.value && (t = "terminal-" + this.value, e = "terminal_" + this.value, $("#tabs").append($('<li class="nav-item"><a class="nav-link" href="#' + e + '" role="tab" data-bs-toggle="tab">' + t + '<button class="close" type="button" title="Close this page">×</button></a></li>')), 1 == this.value ? n = "https://console.python.org/python-dot-org-console/" : 2 == this.value ? n = "https://www.programiz.com/python-programming/online-compiler/" : 3 == this.value && (n = "https://httpie.io/cli/run"), $('<div class="tab-pane fade" id="' + e + '"><div class="row"><div class="col"><a class="btn btn-light btn-sm float-left" data-bs-toggle="collapse" href="#tips" role="button" aria-expanded="false" aria-controls="tips">Help</a><div class="collapse" id="tips"><div class="card card-body">Python into the bash: <pre>__import__("pty").spawn("/bin/sh")<br>__import__("os").system("bash -i")</pre></div></div></div><div class="col"><input class="btn btn-light btn-sm float-end" type="button" id="reload" value="Reload" /></div></div><iframe id="' + e + '" style="border: none; width: 100%;min-height: 500px;" name="terminal1btn" class="embed-responsive-item" allowfullscreen src="' + n + '"></iframe></div>').appendTo(".tab-content"), $("#tabs a[href=#" + e + "]").tab("show"), $("#reload").click(function() {
