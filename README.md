@@ -50,7 +50,9 @@ or Download the packaged <a href="https://github.com/FlyfishSec/rcX/releases" ta
 ### Web UI
 > At the same time, rcX also provides a web interface. 
 Use rcX as a server then you can use it with your team or friends.
-> Tip: When rcX is running as a server, if the request origin is not 127.0.0.1 or localhost, the ngrok tunnel feature will be disabled and the related options will be hidden on the Front-end
+
+> <del> Tip: When rcX is running as a server, if the request origin is not 127.0.0.1 or localhost, the ngrok tunnel feature will be disabled and the related options will be hidden on the Front-end</del>
+
 #### Example:
 `python rcX.py -w`
 
