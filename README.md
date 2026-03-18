@@ -86,7 +86,7 @@ Use rcX as a server then you can use it with your team or friends.
 ##### 9.Get a bind linux netcat shell payload
   `curl http://127.0.0.1/bind/linux/netcat/127.0.0.4/8888`
 
-
+<!-- 
 ## Support rcX
 
 |Bitcoin Address QR Code|Ethereum Address QR Code|Monero Address QR Code|DOGECOIN Address QR Code|
@@ -101,4 +101,4 @@ Use rcX as a server then you can use it with your team or friends.
 
 *Dogecoin*: DBQATuB7t4wk56dwFqcGdqQtY8BSjL77if
 
-
+ -->
